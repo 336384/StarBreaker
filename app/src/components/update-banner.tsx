@@ -1,12 +1,14 @@
 import { useEffect, useState } from "react";
 import { check, type Update } from "@tauri-apps/plugin-updater";
 import { relaunch } from "@tauri-apps/plugin-process";
+import { useT } from "../i18n";
 
 const canAutoUpdate =
   navigator.userAgent.includes("Windows") ||
   !!import.meta.env.APPIMAGE;
 
 export function UpdateBanner() {
+  const t = useT();
   const [update, setUpdate] = useState<Update | null>(null);
   const [status, setStatus] = useState<"idle" | "downloading" | "installing">(
     "idle",
@@ -38,7 +40,7 @@ export function UpdateBanner() {
   return (
     <div className="flex items-center justify-between px-3 py-1.5 text-xs bg-info/10 border-b border-info/20 text-text-sub">
       <span>
-        v{update.version} available
+        {t("v{version} available", { version: update.version })}
         {update.body ? ` — ${update.body.split("\n")[0]}` : ""}
       </span>
       <div className="flex items-center gap-2">
@@ -49,7 +51,7 @@ export function UpdateBanner() {
                 onClick={handleUpdate}
                 className="px-2 py-0.5 rounded bg-info text-white font-medium hover:opacity-90 transition-opacity"
               >
-                Update
+                {t("Update")}
               </button>
             ) : (
               <a
@@ -58,19 +60,19 @@ export function UpdateBanner() {
                 rel="noreferrer"
                 className="px-2 py-0.5 rounded bg-info text-white font-medium hover:opacity-90 transition-opacity"
               >
-                View release
+                {t("View release")}
               </a>
             )}
             <button
               onClick={() => setDismissed(true)}
               className="text-text-dim hover:text-text transition-colors"
             >
-              Dismiss
+              {t("Dismiss")}
             </button>
           </>
         )}
-        {status === "downloading" && <span>Downloading...</span>}
-        {status === "installing" && <span>Installing...</span>}
+        {status === "downloading" && <span>{t("Downloading...")}</span>}
+        {status === "installing" && <span>{t("Installing...")}</span>}
       </div>
     </div>
   );

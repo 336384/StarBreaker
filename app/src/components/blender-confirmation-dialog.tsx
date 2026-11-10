@@ -1,3 +1,5 @@
+import { useT } from "../i18n";
+
 interface BlenderConfirmationDialogProps {
   mode: "install" | "uninstall";
   addonsPath: string;
@@ -13,6 +15,7 @@ export function BlenderConfirmationDialog({
   onCancel,
   busy,
 }: BlenderConfirmationDialogProps) {
+  const t = useT();
   const sep = addonsPath.includes("\\") ? "\\" : "/";
   const trimmed = addonsPath.endsWith(sep) ? addonsPath.slice(0, -1) : addonsPath;
   const targetPath = `${trimmed}${sep}starbreaker_addon${sep}`;
@@ -20,13 +23,13 @@ export function BlenderConfirmationDialog({
   const isUninstall = mode === "uninstall";
 
   const title = isUninstall
-    ? "Confirm Blender Addon Removal"
-    : "Confirm Blender Addon Installation";
+    ? t("Confirm Blender Addon Removal")
+    : t("Confirm Blender Addon Installation");
   const description = isUninstall
-    ? "The StarBreaker addon will be removed from:"
-    : "The StarBreaker addon will be installed to:";
-  const busyLabel = isUninstall ? "Removing addon..." : "Installing addon...";
-  const confirmLabel = isUninstall ? "Remove Addon" : "Confirm Installation";
+    ? t("The StarBreaker addon will be removed from:")
+    : t("The StarBreaker addon will be installed to:");
+  const busyLabel = isUninstall ? t("Removing addon...") : t("Installing addon...");
+  const confirmLabel = isUninstall ? t("Remove Addon") : t("Confirm Installation");
   const confirmClass = isUninstall
     ? "bg-danger text-on-accent hover:brightness-110"
     : "bg-accent text-on-accent hover:brightness-110";
@@ -57,7 +60,7 @@ export function BlenderConfirmationDialog({
               onClick={onCancel}
               className="px-4 py-2 rounded-md text-sm font-medium bg-surface text-text-sub hover:bg-surface-hi transition-colors cursor-pointer"
             >
-              Cancel
+              {t("Cancel")}
             </button>
             <button
               onClick={onConfirm}

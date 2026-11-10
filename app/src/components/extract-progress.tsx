@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { onFolderExtractProgress, type FolderExtractProgress } from "../lib/commands";
+import { useT } from "../i18n";
 
 interface ExtractProgressProps {
   active: boolean;
@@ -7,6 +8,7 @@ interface ExtractProgressProps {
 }
 
 export function ExtractProgress({ active, onDone }: ExtractProgressProps) {
+  const t = useT();
   const [progress, setProgress] = useState<FolderExtractProgress | null>(null);
 
   useEffect(() => {
@@ -30,7 +32,7 @@ export function ExtractProgress({ active, onDone }: ExtractProgressProps) {
   return (
     <div className="absolute inset-0 z-10 bg-bg/80 backdrop-blur-sm flex items-center justify-center">
       <div className="w-[320px] bg-bg-alt border border-border rounded-lg p-5 flex flex-col gap-3 shadow-lg">
-        <h3 className="text-sm font-medium text-text">Extracting...</h3>
+        <h3 className="text-sm font-medium text-text">{t("Extracting...")}</h3>
         <div className="w-full bg-surface rounded-full h-1.5 overflow-hidden">
           <div
             className="bg-primary h-full rounded-full transition-all duration-150"

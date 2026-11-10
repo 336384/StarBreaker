@@ -1,6 +1,7 @@
 import { ChevronDown, ChevronRight, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import type { SocpakHierarchyNode } from "../lib/commands";
+import { useT } from "../i18n";
 
 interface SocpakSelectionDialogProps {
   nodes: SocpakHierarchyNode[];
@@ -30,6 +31,7 @@ function NodeRow({
   selectedPaths: Set<string>;
   onToggle: (node: SocpakHierarchyNode, checked: boolean) => void;
 }) {
+  const t = useT();
   const [expanded, setExpanded] = useState(true);
   const hasChildren = node.children.length > 0;
   const subtreePaths = useMemo(() => collectPaths([node]), [node]);
@@ -54,7 +56,7 @@ function NodeRow({
           onClick={() => setExpanded((value) => !value)}
           className="w-[22px] h-[22px] flex items-center justify-center rounded hover:bg-surface-hi text-text-dim disabled:opacity-0"
           disabled={!hasChildren}
-          title={expanded ? "Collapse" : "Expand"}
+          title={expanded ? t("Collapse") : t("Expand")}
         >
           {hasChildren && (expanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />)}
         </button>
@@ -79,8 +81,8 @@ function NodeRow({
           <p className="text-[10px] text-text-faint truncate mt-0.5">{node.path}</p>
         </div>
         <div className="flex items-center gap-2 text-[10px] text-text-faint tabular-nums">
-          <span>{node.mesh_count} mesh</span>
-          <span>{node.light_count} light</span>
+          <span>{t("{count} meshes", { count: node.mesh_count })}</span>
+          <span>{t("{count} lights", { count: node.light_count })}</span>
         </div>
       </div>
       {expanded && node.children.length > 0 && (
@@ -109,6 +111,7 @@ export function SocpakSelectionDialog({
   onConfirm,
   onCancel,
 }: SocpakSelectionDialogProps) {
+  const t = useT();
   const allPaths = useMemo(() => collectPaths(nodes), [nodes]);
   const selectedCount = allPaths.filter((path) => selectedPaths.has(path)).length;
 
@@ -117,16 +120,19 @@ export function SocpakSelectionDialog({
       <div className="bg-bg-alt border border-border rounded-lg shadow-lg w-[860px] max-w-[92vw] max-h-[86vh] flex flex-col overflow-hidden">
         <div className="px-4 py-3 border-b border-border flex items-center justify-between gap-3">
           <div className="min-w-0">
-            <h3 className="text-sm font-semibold text-text">Select socpak parts</h3>
+            <h3 className="text-sm font-semibold text-text">{t("Select socpak parts")}</h3>
             <p className="text-[11px] text-text-dim mt-0.5">
-              {selectedCount}/{allPaths.length} containers selected
+              {t("{selected}/{total} containers selected", {
+                selected: selectedCount,
+                total: allPaths.length,
+              })}
             </p>
           </div>
           <button
             type="button"
             onClick={onCancel}
             className="w-8 h-8 rounded-md flex items-center justify-center text-text-dim hover:text-text hover:bg-surface/70"
-            title="Close"
+            title={t("Close")}
           >
             <X size={16} />
           </button>
@@ -138,14 +144,14 @@ export function SocpakSelectionDialog({
             onClick={onSelectAll}
             className="px-2.5 py-1.5 rounded-md text-[11px] bg-surface text-text-sub hover:bg-surface-hi hover:text-text"
           >
-            All
+            {t("All")}
           </button>
           <button
             type="button"
             onClick={onClearAll}
             className="px-2.5 py-1.5 rounded-md text-[11px] bg-surface text-text-sub hover:bg-surface-hi hover:text-text"
           >
-            None
+            {t("None")}
           </button>
         </div>
 
@@ -168,7 +174,7 @@ export function SocpakSelectionDialog({
             onClick={onCancel}
             className="px-3 py-2 rounded-md text-xs bg-surface text-text-sub hover:bg-surface-hi hover:text-text"
           >
-            Cancel
+            {t("Cancel")}
           </button>
           <button
             type="button"
@@ -180,7 +186,7 @@ export function SocpakSelectionDialog({
                 : "bg-accent text-on-accent hover:brightness-110"
             }`}
           >
-            Export selected
+            {t("Export selected")}
           </button>
         </div>
       </div>

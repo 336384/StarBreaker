@@ -3,12 +3,14 @@ import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { previewGeometry } from "../lib/commands";
+import { useT } from "../i18n";
 
 interface Props {
   path: string;
 }
 
 export function GeometryPreview({ path }: Props) {
+  const t = useT();
   const containerRef = useRef<HTMLDivElement>(null);
   const stateRef = useRef<{
     renderer: THREE.WebGLRenderer;
@@ -161,7 +163,7 @@ export function GeometryPreview({ path }: Props) {
                 d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
               />
             </svg>
-            <span className="text-xs">Loading geometry...</span>
+            <span className="text-xs">{t("Loading geometry...")}</span>
           </div>
         </div>
       )}
@@ -169,7 +171,7 @@ export function GeometryPreview({ path }: Props) {
         <div className="absolute inset-0 flex items-center justify-center bg-bg z-10">
           <div className="text-center px-8">
             <p className="text-danger text-sm font-medium">
-              Failed to load geometry
+              {t("Failed to load geometry")}
             </p>
             <p className="text-text-dim text-xs mt-1 font-mono break-all">
               {error}

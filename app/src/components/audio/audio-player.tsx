@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useAudioStore } from "../../stores/audio-store";
+import { useT } from "../../i18n";
 
 export function AudioPlayer() {
+  const t = useT();
   const currentSound = useAudioStore((s) => s.currentSound);
   const isPlaying = useAudioStore((s) => s.isPlaying);
   const progress = useAudioStore((s) => s.progress);
@@ -131,7 +133,7 @@ export function AudioPlayer() {
             value={volume}
             onChange={onVolume}
             className="w-20 h-1 accent-accent cursor-pointer"
-            title={`Volume: ${Math.round(volume * 100)}%`}
+            title={t("Volume: {percent}%", { percent: Math.round(volume * 100) })}
           />
 
           <span className="text-xs text-text-faint font-mono">

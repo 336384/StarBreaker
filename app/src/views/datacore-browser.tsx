@@ -18,6 +18,7 @@ import {
   type SearchResultDto,
   type BacklinkDto,
 } from "../lib/commands";
+import { useT } from "../i18n";
 
 /** Callbacks drilled down so any row can open a context menu without each
  *  component having to know about extract state or dialog plumbing. */
@@ -31,6 +32,7 @@ interface DcMenuApi {
 }
 
 export function DataCoreBrowser() {
+  const t = useT();
   const [navWidth, setNavWidth] = useState(350);
   const [extracting, setExtracting] = useState(false);
   const searchQuery = useDataCoreStore((s) => s.searchQuery);
@@ -45,7 +47,7 @@ export function DataCoreBrowser() {
     async (id: string, defaultName: string, format: "json" | "xml") => {
       const { save } = await import("@tauri-apps/plugin-dialog");
       const path = await save({
-        title: `Export ${format.toUpperCase()}`,
+        title: t("Export {format}", { format: format.toUpperCase() }),
         defaultPath: `${defaultName}.${format}`,
         filters: [{ name: format.toUpperCase(), extensions: [format] }],
       });
@@ -57,14 +59,17 @@ export function DataCoreBrowser() {
         console.error(`Export ${format} failed:`, err);
       }
     },
-    [],
+    [t],
   );
 
   const exportFolder = useCallback(
     async (path: string, name: string, format: "json" | "xml") => {
       const { open } = await import("@tauri-apps/plugin-dialog");
       const dir = await open({
-        title: `Export "${name}" folder as ${format.toUpperCase()}`,
+        title: t("Export \"{name}\" folder as {format}", {
+          name,
+          format: format.toUpperCase(),
+        }),
         directory: true,
         multiple: false,
       });
@@ -78,7 +83,7 @@ export function DataCoreBrowser() {
         setExtracting(false);
       }
     },
-    [],
+    [t],
   );
 
   const exportSearchResults = useCallback(
@@ -86,7 +91,10 @@ export function DataCoreBrowser() {
       if (ids.length === 0) return;
       const { open } = await import("@tauri-apps/plugin-dialog");
       const dir = await open({
-        title: `Export ${ids.length.toLocaleString()} records as ${format.toUpperCase()}`,
+        title: t("Export {count} records as {format}", {
+          count: ids.length.toLocaleString(),
+          format: format.toUpperCase(),
+        }),
         directory: true,
         multiple: false,
       });
@@ -100,7 +108,7 @@ export function DataCoreBrowser() {
         setExtracting(false);
       }
     },
-    [],
+    [t],
   );
 
   const copyText = useCallback(async (text: string) => {
@@ -116,25 +124,25 @@ export function DataCoreBrowser() {
   const openFolderMenu = useCallback(
     (e: React.MouseEvent, path: string, name: string) => {
       const items: ContextMenuItem[] = [
-        { label: "Export folder as JSON…", onClick: () => exportFolder(path, name, "json") },
-        { label: "Export folder as XML…", onClick: () => exportFolder(path, name, "xml") },
-        { label: "Copy path", onClick: () => copyText(path) },
+        { label: t("Export folder as JSON…"), onClick: () => exportFolder(path, name, "json") },
+        { label: t("Export folder as XML…"), onClick: () => exportFolder(path, name, "xml") },
+        { label: t("Copy path"), onClick: () => copyText(path) },
       ];
       ctxMenu.open(e, items);
     },
-    [ctxMenu, exportFolder, copyText],
+    [ctxMenu, exportFolder, copyText, t],
   );
 
   const openRecordMenu = useCallback(
     (e: React.MouseEvent, id: string, name: string) => {
       const items: ContextMenuItem[] = [
-        { label: "Export as JSON…", onClick: () => exportRecord(id, name, "json") },
-        { label: "Export as XML…", onClick: () => exportRecord(id, name, "xml") },
-        { label: "Copy ID", onClick: () => copyText(id) },
+        { label: t("Export as JSON…"), onClick: () => exportRecord(id, name, "json") },
+        { label: t("Export as XML…"), onClick: () => exportRecord(id, name, "xml") },
+        { label: t("Copy ID"), onClick: () => copyText(id) },
       ];
       ctxMenu.open(e, items);
     },
-    [ctxMenu, exportRecord, copyText],
+    [ctxMenu, exportRecord, copyText, t],
   );
 
   const menu: DcMenuApi = useMemo(
@@ -152,13 +160,13 @@ export function DataCoreBrowser() {
       <div className="flex items-center gap-2 px-3 border-b border-border bg-bg-alt shrink-0" style={{ height: "var(--toolbar-height)" }}>
         <input
           type="text"
-          placeholder="Search records..."
+          placeholder={t("Search records...")}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="flex-1 bg-surface rounded-md px-3 py-1.5 text-sm text-text placeholder:text-text-faint outline-none focus:ring-1 focus:ring-ring"
         />
         {searching && (
-          <span className="text-xs text-text-dim shrink-0">Searching...</span>
+          <span className="text-xs text-text-dim shrink-0">{t("Searching...")}</span>
         )}
         {hasSearch && !searching && searchResults.length > 0 && (
           <button
@@ -166,21 +174,23 @@ export function DataCoreBrowser() {
             onClick={(e) => {
               ctxMenu.open(e, [
                 {
-                  label: "Export all as JSON…",
+                  label: t("Export all as JSON…"),
                   onClick: () =>
                     exportSearchResults(searchResults.map((r) => r.id), "json"),
                 },
                 {
-                  label: "Export all as XML…",
+                  label: t("Export all as XML…"),
                   onClick: () =>
                     exportSearchResults(searchResults.map((r) => r.id), "xml"),
                 },
               ]);
             }}
-            title={`Export the ${searchResults.length.toLocaleString()} currently shown records.`}
+            title={t("Export the {count} currently shown records.", {
+              count: searchResults.length.toLocaleString(),
+            })}
             className="px-2 py-1 text-xs rounded bg-surface text-text-dim hover:text-text hover:bg-surface-hi shrink-0"
           >
-            Export all matches…
+            {t("Export all matches…")}
           </button>
         )}
       </div>
@@ -212,6 +222,7 @@ function NavPanel({ width, menu }: { width: number; menu: DcMenuApi }) {
 // ── Search results (virtualized flat list while typing) ──────────────────────
 
 function SearchResults({ menu }: { menu: DcMenuApi }) {
+  const t = useT();
   const searchQuery = useDataCoreStore((s) => s.searchQuery);
   const searchResults = useDataCoreStore((s) => s.searchResults);
   const setSearchResults = useDataCoreStore((s) => s.setSearchResults);
@@ -255,15 +266,17 @@ function SearchResults({ menu }: { menu: DcMenuApi }) {
     <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
       <div className="px-2.5 py-1 text-[11px] text-text-dim flex items-center">
         <span className="flex-1">
-          {searching ? "Searching..." : `${searchResults.length} results`}
+          {searching
+            ? t("Searching...")
+            : t("{count} results", { count: searchResults.length })}
         </span>
         <button
           type="button"
           onClick={() => setTreeMode((v) => !v)}
-          title={treeMode ? "Switch to flat list" : "Switch to tree view"}
+          title={treeMode ? t("Switch to flat list") : t("Switch to tree view")}
           className="px-2 py-0.5 text-[10px] rounded bg-surface text-text-dim hover:text-text hover:bg-surface-hi shrink-0"
         >
-          {treeMode ? "Flat" : "Tree"}
+          {treeMode ? t("Flat") : t("Tree")}
         </button>
       </div>
       {treeMode && visibleRows ? (
@@ -344,6 +357,7 @@ function TreeLevel({ path, depth, menu }: {
   depth: number;
   menu: DcMenuApi;
 }) {
+  const t = useT();
   const [entries, setEntries] = useState<TreeEntryDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
@@ -369,7 +383,7 @@ function TreeLevel({ path, depth, menu }: {
   if (loading && entries.length === 0) {
     return (
       <div style={{ paddingLeft: depth * 16 }} className="text-[11px] text-text-faint px-2 py-0.5">
-        Loading...
+        {t("Loading...")}
       </div>
     );
   }
@@ -437,6 +451,7 @@ function FolderRow({ name, depth, expanded, onToggle, onContextMenu }: {
 // ── Right panel: Record inspector ───────────────────────────────────────────
 
 function InspectorPanel() {
+  const t = useT();
   const selectedRecord = useDataCoreStore((s) => s.selectedRecord);
   const loadingRecord = useDataCoreStore((s) => s.loadingRecord);
   const canGoBack = useDataCoreStore((s) => s.canGoBack);
@@ -451,7 +466,7 @@ function InspectorPanel() {
     if (!selectedRecord) return;
     const { save } = await import("@tauri-apps/plugin-dialog");
     const path = await save({
-      title: `Export ${format.toUpperCase()}`,
+      title: t("Export {format}", { format: format.toUpperCase() }),
       defaultPath: `${selectedRecord.name}.${format}`,
       filters: [
         format === "json"
@@ -479,22 +494,22 @@ function InspectorPanel() {
     <div className="flex-1 flex flex-col overflow-hidden">
       {/* Nav bar */}
       <div className="flex items-center gap-1.5 px-2.5 py-1.5 border-b border-border">
-        <NavButton label={"\u2190 Back"} enabled={canGoBack()} onClick={handleBack} />
-        <NavButton label={"Forward \u2192"} enabled={canGoForward()} onClick={handleForward} />
+        <NavButton label={t("\u2190 Back")} enabled={canGoBack()} onClick={handleBack} />
+        <NavButton label={t("Forward \u2192")} enabled={canGoForward()} onClick={handleForward} />
         <div className="flex-1" />
         {selectedRecord ? (
           <span className="text-[13px] text-text truncate">
             {selectedRecord.name}
           </span>
         ) : (
-          <span className="text-[13px] text-text-dim">No record selected</span>
+          <span className="text-[13px] text-text-dim">{t("No record selected")}</span>
         )}
       </div>
 
       {/* Body */}
       {loadingRecord ? (
         <div className="flex-1 flex items-center justify-center">
-          <span className="text-text-dim text-sm">Loading record...</span>
+          <span className="text-text-dim text-sm">{t("Loading record...")}</span>
         </div>
       ) : selectedRecord ? (
         <>
@@ -517,7 +532,7 @@ function InspectorPanel() {
               onClick={() => handleExport("json")}
               className="px-3 py-1 text-xs bg-surface hover:bg-surface-hi text-text rounded-md transition-colors disabled:opacity-50"
             >
-              {saving ? "Saving..." : "Export JSON"}
+              {saving ? t("Saving...") : t("Export JSON")}
             </button>
             <button
               type="button"
@@ -525,13 +540,13 @@ function InspectorPanel() {
               onClick={() => handleExport("xml")}
               className="px-3 py-1 text-xs bg-surface hover:bg-surface-hi text-text rounded-md transition-colors disabled:opacity-50"
             >
-              {saving ? "Saving..." : "Export XML"}
+              {saving ? t("Saving...") : t("Export XML")}
             </button>
           </div>
         </>
       ) : (
         <div className="flex-1 flex items-center justify-center">
-          <span className="text-text-dim text-sm">Select a record to inspect</span>
+          <span className="text-text-dim text-sm">{t("Select a record to inspect")}</span>
         </div>
       )}
     </div>
@@ -562,6 +577,7 @@ function NavButton({ label, enabled, onClick }: {
 // ── Backlinks section ───────────────────────────────────────────────────────
 
 function BacklinksSection({ recordId }: { recordId: string }) {
+  const t = useT();
   const [backlinks, setBacklinks] = useState<BacklinkDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState(false);
@@ -579,7 +595,7 @@ function BacklinksSection({ recordId }: { recordId: string }) {
   if (loading) {
     return (
       <div className="border-t border-border px-2.5 py-2">
-        <span className="text-[11px] text-text-faint">Loading references...</span>
+        <span className="text-[11px] text-text-faint">{t("Loading references...")}</span>
       </div>
     );
   }
@@ -587,7 +603,7 @@ function BacklinksSection({ recordId }: { recordId: string }) {
   if (backlinks.length === 0) {
     return (
       <div className="border-t border-border px-2.5 py-2">
-        <span className="text-[11px] text-text-faint">No incoming references</span>
+        <span className="text-[11px] text-text-faint">{t("No incoming references")}</span>
       </div>
     );
   }
@@ -601,7 +617,7 @@ function BacklinksSection({ recordId }: { recordId: string }) {
       >
         <span className="text-[10px] text-text-dim">{expanded ? "\u25BC" : "\u25B6"}</span>
         <span className="text-xs text-text-sub">
-          Referenced by ({backlinks.length})
+          {t("Referenced by ({count})", { count: backlinks.length })}
         </span>
       </button>
       {expanded && (
@@ -627,6 +643,7 @@ function BacklinksSection({ recordId }: { recordId: string }) {
 const GUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function JsonTree({ json }: { json: string }) {
+  const t = useT();
   const parsed = useRef<unknown>(null);
   const [, setTick] = useState(0);
 
@@ -634,7 +651,7 @@ function JsonTree({ json }: { json: string }) {
     try {
       parsed.current = JSON.parse(json);
     } catch {
-      return <div className="p-2 text-danger text-sm">Failed to parse record JSON</div>;
+      return <div className="p-2 text-danger text-sm">{t("Failed to parse record JSON")}</div>;
     }
   }
 
@@ -721,6 +738,7 @@ function CollapsibleNode({ name, value, depth, rerender, isArray }: {
   rerender: () => void;
   isArray: boolean;
 }) {
+  const t = useT();
   const [expanded, setExpanded] = useState(depth < 2);
   const selectRecord = useSelectRecord();
 
@@ -773,7 +791,7 @@ function CollapsibleNode({ name, value, depth, rerender, isArray }: {
             onClick={(e) => { e.stopPropagation(); selectRecord(recordId); }}
             className="ml-2 text-[10px] text-primary hover:underline"
           >
-            {recordName ? `\u2192 ${recordName}` : "\u2192 open"}
+            {recordName ? `\u2192 ${recordName}` : t("\u2192 open")}
           </button>
         )}
       </div>

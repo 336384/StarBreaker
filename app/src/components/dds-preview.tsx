@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Download } from "lucide-react";
 import { previewDds, exportDdsPng } from "../lib/commands";
+import { useT } from "../i18n";
 import { ImagePanZoom } from "./image-pan-zoom";
 
 interface Props {
@@ -8,6 +9,7 @@ interface Props {
 }
 
 export function DdsPreview({ path }: Props) {
+  const t = useT();
   const [objectUrl, setObjectUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -61,7 +63,7 @@ export function DdsPreview({ path }: Props) {
   if (loading && !objectUrl) {
     return (
       <div className="flex items-center justify-center h-full text-text-dim">
-        <span className="text-xs">Loading texture...</span>
+        <span className="text-xs">{t("Loading texture...")}</span>
       </div>
     );
   }
@@ -71,7 +73,7 @@ export function DdsPreview({ path }: Props) {
       <div className="flex items-center justify-center h-full">
         <div className="text-center px-8">
           <p className="text-danger text-sm font-medium">
-            Failed to load texture
+            {t("Failed to load texture")}
           </p>
           <p className="text-text-dim text-xs mt-1 font-mono break-all">
             {error}
@@ -85,7 +87,7 @@ export function DdsPreview({ path }: Props) {
     const { save } = await import("@tauri-apps/plugin-dialog");
     const stem = path.split(/[\\/]/).pop()?.replace(/\.dds$/i, "") ?? "texture";
     const outputPath = await save({
-      title: "Save texture as PNG",
+      title: t("Save texture as PNG"),
       defaultPath: `${stem}.png`,
       filters: [{ name: "PNG Image", extensions: ["png"] }],
     });
@@ -109,7 +111,7 @@ export function DdsPreview({ path }: Props) {
         {mipCount > 1 && (
           <>
             <span className="text-border">|</span>
-            <span>Mip</span>
+            <span>{t("Mip")}</span>
             <input
               type="range"
               min={0}
@@ -124,16 +126,16 @@ export function DdsPreview({ path }: Props) {
           </>
         )}
         {loading && (
-          <span className="text-text-dim animate-pulse">loading...</span>
+          <span className="text-text-dim animate-pulse">{t("loading...")}</span>
         )}
         <button
           onClick={handleSavePng}
-          title="Save as PNG"
+          title={t("Save as PNG")}
           className="ml-auto flex items-center gap-1.5 px-2 py-1 rounded-md text-text-dim
                      hover:text-text hover:bg-surface/60 transition-colors cursor-pointer"
         >
           <Download size={12} />
-          <span>Save PNG</span>
+          <span>{t("Save PNG")}</span>
         </button>
       </div>
 

@@ -2,6 +2,7 @@ import { Download } from "lucide-react";
 import { audioExportInfo, audioExportMedia } from "../../lib/commands";
 import { useAudioStore } from "../../stores/audio-store";
 import type { AudioSoundResult } from "../../lib/commands";
+import { useT } from "../../i18n";
 
 function exportBaseName(sound: AudioSoundResult) {
   return (sound.label || String(sound.media_id))
@@ -11,6 +12,7 @@ function exportBaseName(sound: AudioSoundResult) {
 }
 
 export function SoundList() {
+  const t = useT();
   const sounds = useAudioStore((s) => s.sounds);
   const currentSound = useAudioStore((s) => s.currentSound);
   const playSound = useAudioStore((s) => s.playSound);
@@ -33,7 +35,7 @@ export function SoundList() {
 
     const { save } = await import("@tauri-apps/plugin-dialog");
     const outputPath = await save({
-      title: `Export ${sound.label}`,
+      title: t("Export {name}", { name: sound.label }),
       defaultPath: `${exportBaseName(sound)}.${extension}`,
       filters: [{ name: extension.toUpperCase(), extensions: [extension] }],
     });
@@ -55,7 +57,7 @@ export function SoundList() {
   return (
     <div className="flex-1 min-w-[200px] flex flex-col overflow-hidden">
       <div className="px-3 py-1.5 text-xs font-medium text-text-dim border-b border-border bg-bg-alt">
-        Sounds {sounds.length > 0 && `(${sounds.length})`}
+        {t("Sounds")} {sounds.length > 0 && `(${sounds.length})`}
       </div>
       <div className="flex-1 overflow-y-auto">
         {sounds.map((sound, index) => {
@@ -72,7 +74,7 @@ export function SoundList() {
               : sound.source_type === "Unavailable"
                 ? "bg-danger/15 text-danger"
                 : "bg-warning/15 text-warning";
-          const mediaTitle = sound.path_description || `${sound.source_type} ${sound.label}`;
+          const mediaTitle = sound.path_description || `${t(sound.source_type)} ${sound.label}`;
           return (
             <div
               key={`${sound.label}-${sound.media_path ?? sound.media_id}-${index}`}
@@ -89,7 +91,7 @@ export function SoundList() {
                 className="shrink-0 w-6 h-6 flex items-center justify-center rounded bg-surface hover:bg-surface-hi
                            transition-colors text-xs disabled:opacity-40 disabled:cursor-not-allowed
                            disabled:hover:bg-surface"
-                title={sound.playable ? `Play ${sound.label}` : mediaTitle}
+                title={sound.playable ? t("Play {name}", { name: sound.label }) : mediaTitle}
               >
                 {isActive ? "||" : "▶"}
               </button>
@@ -98,13 +100,13 @@ export function SoundList() {
                 className={`text-xs px-1.5 py-0.5 rounded ${sourceClass}`}
                 title={mediaTitle}
               >
-                {sound.source_type}
+                {t(sound.source_type)}
               </span>
               <button
                 type="button"
                 onClick={() => handleExport(sound)}
                 disabled={!sound.playable}
-                title={sound.playable ? `Export ${sound.label}` : mediaTitle}
+                title={sound.playable ? t("Export {name}", { name: sound.label }) : mediaTitle}
                 className="ml-auto hidden group-hover:flex items-center justify-center w-5 h-5 rounded
                            text-text-dim hover:text-text hover:bg-surface-hi transition-colors
                            disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:text-text-dim disabled:hover:bg-transparent"
@@ -116,7 +118,7 @@ export function SoundList() {
         })}
         {sounds.length === 0 && (
           <div className="px-3 py-4 text-xs text-text-faint text-center">
-            {selectedTrigger ? "No sounds resolved" : "Select a trigger to see sounds"}
+            {selectedTrigger ? t("No sounds resolved") : t("Select a trigger to see sounds")}
           </div>
         )}
       </div>

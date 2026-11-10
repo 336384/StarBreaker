@@ -1,6 +1,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 import type { DnaInput, Gender } from "./dna";
+import { t } from "../i18n";
 
 export interface DiscoverResult {
   path: string;
@@ -116,7 +117,7 @@ export async function listSubdirs(path: string): Promise<string[]> {
 export async function browseP4k(): Promise<string | null> {
   const { open } = await import("@tauri-apps/plugin-dialog");
   const result = await open({
-    title: "Select Data.p4k",
+    title: t("Select Data.p4k"),
     filters: [{ name: "P4K Archive", extensions: ["p4k"] }],
     multiple: false,
     directory: false,
@@ -300,7 +301,7 @@ export function onExportDone(
 export async function browseOutputDir(): Promise<string | null> {
   const { open } = await import("@tauri-apps/plugin-dialog");
   const result = await open({
-    title: "Select output directory",
+    title: t("Select output directory"),
     directory: true,
     multiple: false,
   });

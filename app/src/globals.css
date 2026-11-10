@@ -49,6 +49,15 @@ body {
     BlinkMacSystemFont,
     "Segoe UI",
     Roboto,
+    /* CJK fallbacks: the Latin faces above ship no Han glyphs, so the UI
+       borrows a proper CJK face for the zh-CN locale instead of letting the
+       WebView pick an arbitrary system fallback (often a serif). */
+    "Microsoft YaHei UI",
+    "Microsoft YaHei",
+    "PingFang SC",
+    "Hiragino Sans GB",
+    "Source Han Sans SC",
+    "Noto Sans CJK SC",
     sans-serif;
   -webkit-font-smoothing: antialiased;
   overflow: hidden;

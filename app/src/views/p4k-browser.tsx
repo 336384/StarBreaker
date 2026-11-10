@@ -18,6 +18,7 @@ import { GeometryPreview } from "../components/geometry-preview";
 import { XmlPreview } from "../components/xml-preview";
 import { DdsPreview } from "../components/dds-preview";
 import { ImagePreview } from "../components/image-preview";
+import { useT } from "../i18n";
 
 /** Default cap on results materialized per keystroke. The "Load all" button
  *  in the toolbar fires an uncapped fetch on demand. */
@@ -63,11 +64,13 @@ function SortHeaderButton({
   onSort: (col: SortColumn) => void;
   className?: string;
 }) {
+  const t = useT();
   const active = sort.column === column;
   const arrow = active ? (sort.direction === "asc" ? "▲" : "▼") : "";
   return (
     <button
       type="button"
+      aria-label={t("Sort by {column}", { column: label })}
       onClick={() => onSort(column)}
       className={`text-left text-[11px] uppercase tracking-wide hover:text-text transition-colors ${
         active ? "text-text" : "text-text-dim"
@@ -86,11 +89,12 @@ function SearchColumnHeader({
   sort: SortState;
   onSort: (col: SortColumn) => void;
 }) {
+  const t = useT();
   return (
     <div className="flex items-center border-b border-border bg-bg-alt h-7 shrink-0">
-      <SortHeaderButton label="Name" column="name" sort={sort} onSort={onSort} className="flex-1 px-3" />
-      <SortHeaderButton label="Size" column="size" sort={sort} onSort={onSort} className="w-20 text-right" />
-      <SortHeaderButton label="Modified" column="modified" sort={sort} onSort={onSort} className="w-32 text-right pr-3" />
+      <SortHeaderButton label={t("Name")} column="name" sort={sort} onSort={onSort} className="flex-1 px-3" />
+      <SortHeaderButton label={t("Size")} column="size" sort={sort} onSort={onSort} className="w-20 text-right" />
+      <SortHeaderButton label={t("Modified")} column="modified" sort={sort} onSort={onSort} className="w-32 text-right pr-3" />
     </div>
   );
 }
@@ -146,6 +150,7 @@ function TreeItem({
   onSelect: (path: string) => void;
   onContextMenu: (e: React.MouseEvent, node: TreeNode) => void;
 }) {
+  const t = useT();
   const isSelected = selectedPath === node.path;
   const [showSpinner, setShowSpinner] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
@@ -189,6 +194,8 @@ function TreeItem({
             showSpinner ? (
               <svg
                 className="animate-spin w-3.5 h-3.5 text-text-faint"
+                role="status"
+                aria-label={t("Loading…")}
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
@@ -268,6 +275,7 @@ function entriesToNodes(parentPath: string, entries: DirEntry[]): TreeNode[] {
 
 
 export function P4kBrowser() {
+  const t = useT();
   const hasData = useAppStore((s) => s.hasData);
   const [tree, setTree] = useState<TreeNode[]>([]);
   const [selectedPath, setSelectedPath] = useState("");
@@ -289,19 +297,19 @@ export function P4kBrowser() {
   const saveFile = useCallback(async (path: string) => {
     const { save } = await import("@tauri-apps/plugin-dialog");
     const filename = path.split("\\").pop() ?? "file";
-    const outputPath = await save({ title: `Save "${filename}"`, defaultPath: filename });
+    const outputPath = await save({ title: t("Save \"{name}\"", { name: filename }), defaultPath: filename });
     if (!outputPath) return;
     try {
       await extractP4kFile(path, outputPath);
     } catch (err) {
       console.error("File extract failed:", err);
     }
-  }, []);
+  }, [t]);
 
   const extractFolder = useCallback(async (folderPath: string, folderName: string) => {
     const { open } = await import("@tauri-apps/plugin-dialog");
     const dir = await open({
-      title: `Extract "${folderName}"`,
+      title: t("Extract \"{name}\"", { name: folderName }),
       directory: true,
       multiple: false,
     });
@@ -314,13 +322,13 @@ export function P4kBrowser() {
     } finally {
       setExtracting(false);
     }
-  }, []);
+  }, [t]);
 
   const extractAllMatches = useCallback(async (paths: string[]) => {
     if (paths.length === 0) return;
     const { open } = await import("@tauri-apps/plugin-dialog");
     const dir = await open({
-      title: `Extract ${paths.length.toLocaleString()} files`,
+      title: t("Extract {count} files", { count: paths.length.toLocaleString() }),
       directory: true,
       multiple: false,
     });
@@ -333,7 +341,7 @@ export function P4kBrowser() {
     } finally {
       setExtracting(false);
     }
-  }, []);
+  }, [t]);
 
   const copyPath = useCallback(async (path: string) => {
     try {
@@ -347,22 +355,22 @@ export function P4kBrowser() {
     (node: TreeNode): ContextMenuItem[] =>
       node.isDir
         ? [
-            { label: "Extract folder…", onClick: () => extractFolder(node.path, node.name) },
-            { label: "Copy path", onClick: () => copyPath(node.path) },
+            { label: t("Extract folder…"), onClick: () => extractFolder(node.path, node.name) },
+            { label: t("Copy path"), onClick: () => copyPath(node.path) },
           ]
         : [
-            { label: "Save as…", onClick: () => saveFile(node.path) },
-            { label: "Copy path", onClick: () => copyPath(node.path) },
+            { label: t("Save as…"), onClick: () => saveFile(node.path) },
+            { label: t("Copy path"), onClick: () => copyPath(node.path) },
           ],
-    [extractFolder, saveFile, copyPath],
+    [t, extractFolder, saveFile, copyPath],
   );
 
   const buildSearchFileMenu = useCallback(
     (path: string): ContextMenuItem[] => [
-      { label: "Save as…", onClick: () => saveFile(path) },
-      { label: "Copy path", onClick: () => copyPath(path) },
+      { label: t("Save as…"), onClick: () => saveFile(path) },
+      { label: t("Copy path"), onClick: () => copyPath(path) },
     ],
-    [saveFile, copyPath],
+    [t, saveFile, copyPath],
   );
 
   // Load root entries on mount
@@ -502,7 +510,7 @@ export function P4kBrowser() {
   if (!hasData) {
     return (
       <div className="flex-1 flex items-center justify-center text-text-dim">
-        Load a P4k to browse files
+        {t("Load a P4k to browse files")}
       </div>
     );
   }
@@ -515,7 +523,7 @@ export function P4kBrowser() {
       <div className="px-3 flex items-center gap-2 border-b border-border bg-bg-alt shrink-0" style={{ height: "var(--toolbar-height)" }}>
         <input
           type="text"
-          placeholder="Search files..."
+          placeholder={t("Search files...")}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="flex-1 bg-surface rounded-md px-3 py-1.5 text-sm text-text placeholder:text-text-faint outline-none focus:ring-1 focus:ring-ring"
@@ -523,10 +531,13 @@ export function P4kBrowser() {
         {hasSearch && (
           <span className="text-xs text-text-dim shrink-0">
             {searching
-              ? "Searching..."
+              ? t("Searching...")
               : searchTotal > searchResults.length
-                ? `${searchResults.length.toLocaleString()} of ${searchTotal.toLocaleString()}`
-                : `${searchResults.length.toLocaleString()} results`}
+                ? t("{count} of {total}", {
+                    count: searchResults.length.toLocaleString(),
+                    total: searchTotal.toLocaleString(),
+                  })
+                : t("{count} results", { count: searchResults.length.toLocaleString() })}
           </span>
         )}
         {hasSearch && !searching && searchTotal > searchResults.length && (
@@ -554,27 +565,30 @@ export function P4kBrowser() {
             }}
             className="px-2 py-1 text-xs rounded bg-surface text-text-dim hover:text-text hover:bg-surface-hi shrink-0 disabled:opacity-50"
           >
-            {loadingAll ? "Loading…" : `Load all ${searchTotal.toLocaleString()}`}
+            {loadingAll ? t("Loading…") : t("Load all {count}", { count: searchTotal.toLocaleString() })}
           </button>
         )}
         {hasSearch && (
           <button
             type="button"
             onClick={() => setTreeMode((v) => !v)}
-            title={treeMode ? "Switch to flat list" : "Switch to tree view"}
+            title={treeMode ? t("Switch to flat list") : t("Switch to tree view")}
             className="px-2 py-1 text-xs rounded bg-surface text-text-dim hover:text-text hover:bg-surface-hi shrink-0"
           >
-            {treeMode ? "Flat" : "Tree"}
+            {treeMode ? t("Flat") : t("Tree")}
           </button>
         )}
         {hasSearch && !searching && searchResults.length > 0 && (
           <button
             type="button"
             onClick={() => extractAllMatches(searchResults.map((r) => r.path))}
-            title={`Extract the ${searchResults.length.toLocaleString()} currently shown files. Use "Load all" first if you want every match.`}
+            title={t(
+              "Extract the {count} currently shown files. Use \"Load all\" first if you want every match.",
+              { count: searchResults.length.toLocaleString() },
+            )}
             className="px-2 py-1 text-xs rounded bg-surface text-text-dim hover:text-text hover:bg-surface-hi shrink-0"
           >
-            Extract all matches…
+            {t("Extract all matches…")}
           </button>
         )}
       </div>
@@ -691,7 +705,7 @@ export function P4kBrowser() {
             <p className="text-sm font-mono break-all px-8">{selectedPath}</p>
           </div>
         ) : (
-          <p className="text-sm">Select a file to preview</p>
+          <p className="text-sm">{t("Select a file to preview")}</p>
         )}
       </div>
       </div>

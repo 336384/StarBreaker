@@ -4,8 +4,10 @@ import { EntityList } from "../components/audio/entity-list";
 import { TriggerList } from "../components/audio/trigger-list";
 import { SoundList } from "../components/audio/sound-list";
 import { AudioPlayer } from "../components/audio/audio-player";
+import { useT } from "../i18n";
 
 export function AudioView() {
+  const t = useT();
   const isInitialized = useAudioStore((s) => s.isInitialized);
   const isInitializing = useAudioStore((s) => s.isInitializing);
   const init = useAudioStore((s) => s.init);
@@ -20,7 +22,7 @@ export function AudioView() {
   if (!isInitialized) {
     return (
       <div className="flex-1 flex items-center justify-center text-text-dim">
-        {isInitializing ? "Building ATL index..." : error ?? "Initializing..."}
+        {isInitializing ? t("Building ATL index...") : error ?? t("Initializing...")}
       </div>
     );
   }
@@ -39,7 +41,15 @@ export function AudioView() {
   );
 }
 
+const SEARCH_MODES = [
+  { id: "bank", label: "Banks" },
+  { id: "trigger", label: "Triggers" },
+  { id: "external", label: "External" },
+  { id: "entity", label: "Entities" },
+] as const;
+
 function SearchBar() {
+  const t = useT();
   const searchQuery = useAudioStore((s) => s.searchQuery);
   const searchMode = useAudioStore((s) => s.searchMode);
   const setSearchMode = useAudioStore((s) => s.setSearchMode);
@@ -50,12 +60,12 @@ function SearchBar() {
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(null);
   const placeholder =
     searchMode === "entity"
-      ? "Search entities..."
+      ? t("Search entities...")
       : searchMode === "bank"
-        ? "Search banks..."
+        ? t("Search banks...")
         : searchMode === "external"
-          ? "Search external sources..."
-          : "Search triggers...";
+          ? t("Search external sources...")
+          : t("Search triggers...");
 
   const onInput = useCallback(
     (value: string) => {
@@ -75,23 +85,26 @@ function SearchBar() {
         onChange={(e) => onInput(e.target.value)}
         className="flex-1 bg-surface rounded-md px-3 py-1.5 text-sm text-text placeholder:text-text-faint outline-none focus:ring-1 focus:ring-ring"
       />
-      {isSearching && <span className="text-xs text-text-dim shrink-0">Searching...</span>}
+      {isSearching && <span className="text-xs text-text-dim shrink-0">{t("Searching...")}</span>}
       <span className="text-xs text-text-faint shrink-0">
-        {triggerCount.toLocaleString()} triggers / {externalSourceCount.toLocaleString()} external
+        {t("{triggers} triggers / {sources} external", {
+          triggers: triggerCount.toLocaleString(),
+          sources: externalSourceCount.toLocaleString(),
+        })}
       </span>
       <div className="flex gap-1 shrink-0">
-        {(["bank", "trigger", "external", "entity"] as const).map((mode) => (
+        {SEARCH_MODES.map((mode) => (
           <button
-            key={mode}
+            key={mode.id}
             type="button"
-            onClick={() => setSearchMode(mode)}
+            onClick={() => setSearchMode(mode.id)}
             className={`px-3 py-1 text-xs rounded-md transition-colors capitalize ${
-              searchMode === mode
+              searchMode === mode.id
                 ? "bg-primary/15 text-text"
                 : "bg-surface text-text-dim hover:bg-surface-hi hover:text-text"
             }`}
           >
-            {mode}
+            {t(mode.label)}
           </button>
         ))}
       </div>

@@ -1,8 +1,11 @@
 import { useEffect, useRef } from "react";
 import { useAppStore } from "../stores/app-store";
 import { discoverP4k, openP4k, browseP4k, onLoadProgress } from "../lib/commands";
+import { tm, useT } from "../i18n";
+import { LanguageSwitcher } from "./language-switcher";
 
 export function StartupScreen() {
+  const t = useT();
   const loading = useAppStore((s) => s.loading);
   const loadingProgress = useAppStore((s) => s.loadingProgress);
   const loadingMessage = useAppStore((s) => s.loadingMessage);
@@ -54,12 +57,13 @@ export function StartupScreen() {
   };
 
   return (
-    <div className="flex-1 flex items-center justify-center bg-bg">
+    <div className="flex-1 flex items-center justify-center bg-bg relative">
+      <LanguageSwitcher floating />
       <div className="w-[480px]">
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-2xl font-bold text-primary mb-2">StarBreaker</h1>
-          <p className="text-sm text-text-dim">Star Citizen Data Explorer</p>
+          <p className="text-sm text-text-dim">{t("Star Citizen Data Explorer")}</p>
         </div>
 
         {/* Error message */}
@@ -73,7 +77,7 @@ export function StartupScreen() {
         {loading && (
           <div className="bg-bg-alt border border-border rounded-lg p-6 mb-4">
             <div className="flex justify-between text-xs text-text-dim mb-2">
-              <span>{loadingMessage || "Loading..."}</span>
+              <span>{loadingMessage ? tm(loadingMessage) : t("Loading...")}</span>
               <span>{Math.round(loadingProgress * 100)}%</span>
             </div>
             <div className="h-2 bg-surface rounded-full overflow-hidden">
@@ -91,7 +95,7 @@ export function StartupScreen() {
             {discoveries.length > 0 && (
               <>
                 <p className="text-xs text-text-dim uppercase tracking-wider font-semibold">
-                  Detected installations
+                  {t("Detected installations")}
                 </p>
                 {discoveries.map((d) => (
                   <button
@@ -124,7 +128,7 @@ export function StartupScreen() {
             {discoveries.length === 0 && (
               <div className="p-4 bg-bg-alt border border-border rounded-lg text-center">
                 <p className="text-sm text-text-dim">
-                  No Star Citizen installations detected.
+                  {t("No Star Citizen installations detected.")}
                 </p>
               </div>
             )}
@@ -133,7 +137,7 @@ export function StartupScreen() {
             {recentCustomPaths.length > 0 && (
               <>
                 <p className="text-xs text-text-dim uppercase tracking-wider font-semibold mt-2">
-                  Recent
+                  {t("Recent")}
                 </p>
                 {recentCustomPaths.map((path) => (
                   <button
@@ -159,7 +163,7 @@ export function StartupScreen() {
                          rounded-lg text-sm text-text-sub hover:text-text hover:border-primary/50
                          hover:bg-primary/5 transition-colors cursor-pointer"
             >
-              Browse for Data.p4k...
+              {t("Browse for Data.p4k...")}
             </button>
           </div>
         )}

@@ -4,8 +4,10 @@
 import { QuadBlendPad } from "./quad-blend-pad";
 import { useCharacterStore } from "../../stores/character-store";
 import { FACE_PARTS, headIdMax } from "../../lib/dna";
+import { useT } from "../../i18n";
 
 export function FacePartPanel({ index }: { index: number }) {
+  const t = useT();
   const part = useCharacterStore((s) => s.dna.face_parts[index]);
   const gender = useCharacterStore((s) => s.dna.gender);
   const setPart = useCharacterStore((s) => s.setPart);
@@ -15,7 +17,7 @@ export function FacePartPanel({ index }: { index: number }) {
 
   return (
     <div className="flex flex-col gap-1 p-2 border border-border rounded-md bg-bg-alt">
-      <span className="text-xs font-medium text-text">{FACE_PARTS[index]}</span>
+      <span className="text-xs font-medium text-text">{t(FACE_PARTS[index])}</span>
       <QuadBlendPad
         values={values}
         headIds={headIds}

@@ -5,12 +5,14 @@ import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { useT } from "../../i18n";
 
 interface Props {
   glb: ArrayBuffer | null;
 }
 
 export function CharacterPreview({ glb }: Props) {
+  const t = useT();
   const containerRef = useRef<HTMLDivElement>(null);
   const stateRef = useRef<{
     renderer: THREE.WebGLRenderer;
@@ -186,7 +188,7 @@ export function CharacterPreview({ glb }: Props) {
                 d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
               />
             </svg>
-            <span className="text-xs">Loading character...</span>
+            <span className="text-xs">{t("Loading character...")}</span>
           </div>
         </div>
       )}
@@ -194,7 +196,7 @@ export function CharacterPreview({ glb }: Props) {
         <div className="absolute inset-0 flex items-center justify-center bg-bg z-10">
           <div className="text-center px-8">
             <p className="text-danger text-sm font-medium">
-              Failed to load character
+              {t("Failed to load character")}
             </p>
             <p className="text-text-dim text-xs mt-1 font-mono break-all">
               {error}

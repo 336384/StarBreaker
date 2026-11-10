@@ -2,6 +2,8 @@ import { Archive, Database, Box, Boxes, Shield, Volume2, User, type LucideIcon }
 import { useAppStore, type AppMode } from "../stores/app-store";
 import { getAppVersion, type AppVersion } from "../lib/commands";
 import { useEffect, useState } from "react";
+import { useT } from "../i18n";
+import { LanguageSwitcher } from "./language-switcher";
 
 interface ModeButton {
   id: AppMode;
@@ -28,6 +30,7 @@ const modes: ModeButton[] = [
 ];
 
 export function Sidebar() {
+  const t = useT();
   const mode = useAppStore((s) => s.mode);
   const setMode = useAppStore((s) => s.setMode);
   const entryCount = useAppStore((s) => s.entryCount);
@@ -52,7 +55,7 @@ export function Sidebar() {
             {p4kSource === "custom" ? fileName : (p4kSource ?? fileName)}
           </p>
           <p className="text-[11px] text-text-dim mt-0.5">
-            {entryCount.toLocaleString()} files &middot; {formatBytes(totalBytes)}
+            {t("{count} files", { count: entryCount.toLocaleString() })} &middot; {formatBytes(totalBytes)}
           </p>
         </div>
       )}
@@ -74,10 +77,14 @@ export function Sidebar() {
             `}
           >
             <m.icon size={16} strokeWidth={1.75} />
-            {m.label}
+            {t(m.label)}
           </button>
         ))}
       </nav>
+
+      <div className="px-2 py-2 border-t border-border">
+        <LanguageSwitcher />
+      </div>
 
       {version && (
         <div className="px-3 py-2 border-t border-border">

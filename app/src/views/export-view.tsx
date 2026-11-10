@@ -18,8 +18,11 @@ import {
   type ExportRequest,
   type BlenderAddonTargets,
 } from "../lib/commands";
+import { tm, useT } from "../i18n";
+import { entityLabel, shipName } from "../lib/ship-names";
 
 export function ExportView({ armorOnly = false }: { armorOnly?: boolean }) {
+  const t = useT();
   const [armorCategory, setArmorCategory] = useState(0);
   const [armorSearch, setArmorSearch] = useState("");
   const [armorBody, setArmorBody] = useState("Male");
@@ -176,7 +179,8 @@ export function ExportView({ armorOnly = false }: { armorOnly?: boolean }) {
           if (search === "") return true;
           const q = search.toLowerCase();
           return e.name.toLowerCase().includes(q) ||
-            (e.display_name?.toLowerCase().includes(q) ?? false);
+            (e.display_name?.toLowerCase().includes(q) ?? false) ||
+            (shipName(e.name)?.toLowerCase().includes(q) ?? false);
         },
       )
     : [];
@@ -223,8 +227,8 @@ export function ExportView({ armorOnly = false }: { armorOnly?: boolean }) {
       selectedEntities.length,
       selectedEntities.length === 1
         ? (selectedEntities[0].display_name ?? selectedEntities[0].name)
-        : "Batch export",
-      "Preparing export",
+        : t("Batch export"),
+      t("Preparing export"),
     );
     startExport(request).catch((err) => {
       console.error("Export failed:", err);
@@ -331,30 +335,28 @@ export function ExportView({ armorOnly = false }: { armorOnly?: boolean }) {
   const countLabel =
     totalTargets === 0
       ? ""
-      : totalTargets === 1
-        ? "1 installation"
-        : `${totalTargets} installations`;
+      : t("{count} installations", { count: totalTargets });
 
   const breakdownLine = (() => {
     if (totalTargets === 0) {
       return incompatibleFound
-        ? "Blender detected, but requires 5.0 or newer"
-        : "No Blender installations detected";
+        ? t("Blender detected, but requires 5.0 or newer")
+        : t("No Blender installations detected");
     }
     if (totalTargets === 1) {
       const only = targets[0];
       return only.state === "installed"
-        ? "Addon installed and up to date"
+        ? t("Addon installed and up to date")
         : only.state === "upgrade"
-          ? "Update available"
-          : "Not installed";
+          ? t("Update available")
+          : t("Not installed");
     }
     const parts: string[] = [];
-    if (installedCount) parts.push(`${installedCount} installed`);
+    if (installedCount) parts.push(t("{count} installed", { count: installedCount }));
     if (upgradeCount)
-      parts.push(`${upgradeCount} update${upgradeCount > 1 ? "s" : ""} available`);
-    if (installCount) parts.push(`${installCount} not installed`);
-    return parts.join(", ");
+      parts.push(t("{count} updates available", { count: upgradeCount }));
+    if (installCount) parts.push(t("{count} not installed", { count: installCount }));
+    return parts.join(t(", "));
   })();
 
   return (
@@ -364,7 +366,7 @@ export function ExportView({ armorOnly = false }: { armorOnly?: boolean }) {
         <div className="absolute inset-0 z-10 bg-bg/80 backdrop-blur-sm flex items-center justify-center">
           <div className="w-[360px] bg-bg-alt border border-border rounded-lg p-6 flex flex-col gap-4 shadow-lg">
             <h3 className="text-sm font-semibold text-text">
-              Exporting models...
+              {t("Exporting models...")}
             </h3>
 
             <div className="flex flex-col gap-1.5">
@@ -377,11 +379,11 @@ export function ExportView({ armorOnly = false }: { armorOnly?: boolean }) {
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0 flex-1">
                   <p className="text-[11px] text-text-dim truncate">
-                    {progressLabel || "Preparing export..."}
+                    {progressLabel || t("Preparing export...")}
                   </p>
                   {progressStage && (
                     <p className="text-[10px] text-text-faint truncate mt-0.5">
-                      {progressStage}
+                      {tm(progressStage)}
                     </p>
                   )}
                 </div>
@@ -411,7 +413,7 @@ export function ExportView({ armorOnly = false }: { armorOnly?: boolean }) {
               className="w-full py-2 rounded-md text-xs font-medium bg-danger/15 text-danger
                          hover:bg-danger/25 transition-colors cursor-pointer"
             >
-              Cancel
+              {t("Cancel")}
             </button>
           </div>
         </div>
@@ -423,7 +425,7 @@ export function ExportView({ armorOnly = false }: { armorOnly?: boolean }) {
         <div className="flex items-center gap-2 px-3 border-b border-border bg-bg-alt shrink-0" style={{ height: "var(--toolbar-height)" }}>
           <input
             type="text"
-            placeholder={armorOnly ? "Search armor and undersuits..." : "Search entities..."}
+            placeholder={armorOnly ? t("Search armor and undersuits...") : t("Search entities...")}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="flex-1 bg-surface rounded-md px-3 py-1.5 text-sm text-text placeholder:text-text-faint outline-none focus:ring-1 focus:ring-ring"
@@ -435,21 +437,21 @@ export function ExportView({ armorOnly = false }: { armorOnly?: boolean }) {
               onChange={(e) => setHideNpcVariants(e.target.checked)}
               className="accent-accent w-3 h-3"
             />
-            <span className="text-[11px] text-text-dim">Hide NPC</span>
+            <span className="text-[11px] text-text-dim">{t("Hide NPC")}</span>
           </label>
           <button
             onClick={() => selectAllFiltered(filtered.map((e) => e.id))}
             className="text-[11px] text-text-dim hover:text-text px-2 py-1 rounded-md hover:bg-surface/60
                        transition-colors cursor-pointer shrink-0"
           >
-            All
+            {t("All")}
           </button>
           <button
             onClick={() => clearFiltered(filtered.map((e) => e.id))}
             className="text-[11px] text-text-dim hover:text-text px-2 py-1 rounded-md hover:bg-surface/60
                        transition-colors cursor-pointer shrink-0"
           >
-            None
+            {t("None")}
           </button>
           <span className="text-[11px] text-text-faint tabular-nums shrink-0">
             {selectedInCategory}/{filtered.length}
@@ -457,7 +459,7 @@ export function ExportView({ armorOnly = false }: { armorOnly?: boolean }) {
           <div className="flex gap-1 overflow-x-auto">
             {categoriesLoading ? (
               <span className="text-xs text-text-dim px-3 py-1">
-                Scanning...
+                {t("Scanning...")}
               </span>
             ) : (
               categories.map((cat, i) => (
@@ -473,7 +475,7 @@ export function ExportView({ armorOnly = false }: { armorOnly?: boolean }) {
                     }
                   `}
                 >
-                  {cat.name}
+                  {tm(cat.name)}
                   <span className="ml-1.5 opacity-60">
                     {cat.entities.length}
                   </span>
@@ -485,9 +487,9 @@ export function ExportView({ armorOnly = false }: { armorOnly?: boolean }) {
 
         {/* Entity list */}
         <div className="flex-1 overflow-y-auto px-1">
-          {scanError && <p role="alert" className="p-3 text-sm text-danger">Could not load items: {scanError}</p>}
+          {scanError && <p role="alert" className="p-3 text-sm text-danger">{t("Could not load items: {error}", { error: scanError })}</p>}
           {!categoriesLoading && !scanError && filtered.length === 0 && (
-            <p className="p-3 text-sm text-text-dim">{armorOnly ? "No armor matches these filters in the loaded archive." : "No entities match these filters."}</p>
+            <p className="p-3 text-sm text-text-dim">{armorOnly ? t("No armor matches these filters in the loaded archive.") : t("No entities match these filters.")}</p>
           )}
           {filtered.map((entity) => {
             const isSelected = selected.has(entity.id);
@@ -507,7 +509,7 @@ export function ExportView({ armorOnly = false }: { armorOnly?: boolean }) {
                   className="accent-accent w-3.5 h-3.5 rounded shrink-0"
                 />
                 <span className="truncate">
-                  {entity.display_name ?? entity.name}
+                  {entityLabel(entity.name, entity.display_name)}
                   {entity.display_name && (
                     <span className="ml-1.5 text-text-faint text-[10px]">
                       {entity.name}
@@ -525,32 +527,30 @@ export function ExportView({ armorOnly = false }: { armorOnly?: boolean }) {
       <div className="shrink-0 border-l border-border bg-bg-alt flex flex-col" style={{ width: optionsWidth }}>
         <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-5">
           <h2 className="text-xs font-semibold text-primary uppercase tracking-wider">
-            {armorOnly ? "Armor · Blender export" : "Export Options"}
+            {armorOnly ? t("Armor · Blender export") : t("Export Options")}
           </h2>
           {armorOnly && (
             <div className="flex flex-col gap-2">
             <p className="text-xs text-text-sub leading-relaxed">
-              Exports native .blend assets with materials, textures and palettes.
-              Open the package scene.blend with the StarBreaker add-on enabled
-              to load its materials automatically.
+              {t("Exports native .blend assets with materials, textures and palettes. Open the package scene.blend with the StarBreaker add-on enabled to load its materials automatically.")}
             </p>
-            <label className="text-xs text-text-sub" htmlFor="armor-body">Body variant</label>
+            <label className="text-xs text-text-sub" htmlFor="armor-body">{t("Body variant")}</label>
             <select id="armor-body" value={armorBody} onChange={(event) => setArmorBody(event.target.value)} className="bg-surface rounded-md p-2 text-sm text-text">
-              <option value="Male">Male</option>
-              <option value="Female">Female</option>
-              <option value="">Inventory / default model</option>
+              <option value="Male">{t("Male")}</option>
+              <option value="Female">{t("Female")}</option>
+              <option value="">{t("Inventory / default model")}</option>
             </select>
-            <p className="text-[10px] text-text-faint">Worn variants use DataCore tags. Items without the selected variant report an error.</p>
+            <p className="text-[10px] text-text-faint">{t("Worn variants use DataCore tags. Items without the selected variant report an error.")}</p>
             </div>
           )}
 
           <div className="rounded-md border border-border bg-surface/40 p-3 flex flex-col gap-2.5">
             <div className="flex items-center justify-between gap-2">
-              <span className="text-xs text-text-sub">Blender Addon</span>
+              <span className="text-xs text-text-sub">{t("Blender Addon")}</span>
               {addonLoading ? (
                 <span className="text-[10px] text-text-faint flex items-center gap-1.5">
                   <span className="w-2.5 h-2.5 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                  Checking...
+                  {t("Checking...")}
                 </span>
               ) : countLabel ? (
                 <span className="text-[10px] text-text-faint">{countLabel}</span>
@@ -569,7 +569,7 @@ export function ExportView({ armorOnly = false }: { armorOnly?: boolean }) {
                   {breakdownLine}
                 </p>
                 <p className="text-[10px] text-text-faint leading-relaxed">
-                  Bundled addon: v{addonTargets.current_version}
+                  {t("Bundled addon: v{version}", { version: addonTargets.current_version })}
                 </p>
               </>
             )}
@@ -593,12 +593,12 @@ export function ExportView({ armorOnly = false }: { armorOnly?: boolean }) {
                 <span className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />
               )}
               {addonBusy
-                ? "Installing..."
+                ? t("Installing...")
                 : installCount > 0 && upgradeCount === 0
-                  ? "Install Addon"
+                  ? t("Install Addon")
                   : upgradeCount > 0 && installCount === 0
-                    ? "Upgrade Addon"
-                    : "Manage Installs"}
+                    ? t("Upgrade Addon")
+                    : t("Manage Installs")}
             </button>
 
             {blenderRunning && hasInstalled && (
@@ -606,15 +606,15 @@ export function ExportView({ armorOnly = false }: { armorOnly?: boolean }) {
                 onClick={handleReloadAddon}
                 disabled={addonBusy}
                 className="w-full py-1.5 rounded-md text-[11px] font-medium bg-surface text-text-sub hover:bg-surface-hi transition-colors disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
-                title="Reload addon in running Blender"
+                title={t("Reload addon in running Blender")}
               >
-                Reload in Blender
+                {t("Reload in Blender")}
               </button>
             )}
 
             {addonInfo && (
               <p className="text-[10px] text-text-sub leading-relaxed break-words">
-                {addonInfo}
+                {tm(addonInfo)}
               </p>
             )}
             {addonError && (
@@ -627,7 +627,7 @@ export function ExportView({ armorOnly = false }: { armorOnly?: boolean }) {
           {/* LOD */}
           <div className="flex flex-col gap-1.5">
             <div className="flex items-center justify-between">
-              <span className="text-xs text-text-sub">LOD Level</span>
+              <span className="text-xs text-text-sub">{t("LOD Level")}</span>
               <span className="text-xs text-text-faint tabular-nums">
                 {lod}
               </span>
@@ -641,15 +641,15 @@ export function ExportView({ armorOnly = false }: { armorOnly?: boolean }) {
               className="w-full accent-accent h-1.5"
             />
             <div className="flex justify-between text-[10px] text-text-faint">
-              <span>Highest</span>
-              <span>Lowest</span>
+              <span>{t("Highest")}</span>
+              <span>{t("Lowest")}</span>
             </div>
           </div>
 
           {/* Mip */}
           <div className="flex flex-col gap-1.5">
             <div className="flex items-center justify-between">
-              <span className="text-xs text-text-sub">Texture Mip</span>
+              <span className="text-xs text-text-sub">{t("Texture Mip")}</span>
               <span className="text-xs text-text-faint tabular-nums">
                 {mip}
               </span>
@@ -663,17 +663,17 @@ export function ExportView({ armorOnly = false }: { armorOnly?: boolean }) {
               className="w-full accent-accent h-1.5"
             />
             <div className="flex justify-between text-[10px] text-text-faint">
-              <span>Full res</span>
-              <span>Smallest</span>
+              <span>{t("Full res")}</span>
+              <span>{t("Smallest")}</span>
             </div>
           </div>
 
           {/* Threads */}
           <div className="flex flex-col gap-1.5">
             <div className="flex items-center justify-between">
-              <span className="text-xs text-text-sub">Threads</span>
+              <span className="text-xs text-text-sub">{t("Threads")}</span>
               <span className="text-xs text-text-faint tabular-nums">
-                {threads === 0 ? "Auto" : threads}
+                {threads === 0 ? t("Auto") : threads}
               </span>
             </div>
             <input
@@ -685,14 +685,14 @@ export function ExportView({ armorOnly = false }: { armorOnly?: boolean }) {
               className="w-full accent-accent h-1.5"
             />
             <div className="flex justify-between text-[10px] text-text-faint">
-              <span>Auto</span>
+              <span>{t("Auto")}</span>
               <span>{navigator.hardwareConcurrency || 16}</span>
             </div>
           </div>
 
           {/* Export Kind */}
           {!armorOnly && <div className="flex flex-col gap-1.5">
-            <span className="text-xs text-text-sub">Package</span>
+            <span className="text-xs text-text-sub">{t("Package")}</span>
             <div className="flex flex-col gap-1">
               {([
                 { value: "bundled", label: "Bundled - single .glb", tip: "Single-file export for direct viewing in stock tools." },
@@ -701,7 +701,7 @@ export function ExportView({ armorOnly = false }: { armorOnly?: boolean }) {
                 <label
                   key={opt.value}
                   className="flex items-center gap-2 cursor-pointer group"
-                  title={opt.tip}
+                  title={t(opt.tip)}
                 >
                   <input
                     type="radio"
@@ -712,7 +712,7 @@ export function ExportView({ armorOnly = false }: { armorOnly?: boolean }) {
                     className="accent-accent w-3 h-3"
                   />
                   <span className="text-xs text-text-sub group-hover:text-text transition-colors">
-                    {opt.label}
+                    {t(opt.label)}
                   </span>
                 </label>
               ))}
@@ -729,11 +729,11 @@ export function ExportView({ armorOnly = false }: { armorOnly?: boolean }) {
                   className="accent-accent w-3.5 h-3.5 rounded"
                 />
                 <span className="text-xs text-text-sub group-hover:text-text transition-colors">
-                  Overwrite existing meshes and textures
+                  {t("Overwrite existing meshes and textures")}
                 </span>
               </label>
               <p className="text-[10px] text-text-faint leading-relaxed pl-6">
-                When disabled, existing Data/... .blend and .png assets are left in place.
+                {t("When disabled, existing Data/... .blend and .png assets are left in place.")}
               </p>
             </div>
           )}
@@ -741,7 +741,7 @@ export function ExportView({ armorOnly = false }: { armorOnly?: boolean }) {
           {/* Material Mode */}
           {!isBlendExport && (
             <div className="flex flex-col gap-1.5">
-              <span className="text-xs text-text-sub">Materials</span>
+              <span className="text-xs text-text-sub">{t("Materials")}</span>
               <div className="flex flex-col gap-1">
                 {([
                   { value: "none", label: "None", tip: "Geometry only, no material data. Plain white surfaces." },
@@ -752,7 +752,7 @@ export function ExportView({ armorOnly = false }: { armorOnly?: boolean }) {
                   <label
                     key={opt.value}
                     className="flex items-center gap-2 cursor-pointer group"
-                    title={opt.tip}
+                    title={t(opt.tip)}
                   >
                     <input
                       type="radio"
@@ -763,7 +763,7 @@ export function ExportView({ armorOnly = false }: { armorOnly?: boolean }) {
                       className="accent-accent w-3 h-3"
                     />
                     <span className="text-xs text-text-sub group-hover:text-text transition-colors">
-                      {opt.label}
+                      {t(opt.label)}
                     </span>
                   </label>
                 ))}
@@ -781,7 +781,7 @@ export function ExportView({ armorOnly = false }: { armorOnly?: boolean }) {
                 className="accent-accent w-3.5 h-3.5 rounded"
               />
               <span className="text-xs text-text-sub group-hover:text-text transition-colors">
-                Include interiors
+                {t("Include interiors")}
               </span>
             </label>
             {!isBlendExport && (
@@ -794,7 +794,7 @@ export function ExportView({ armorOnly = false }: { armorOnly?: boolean }) {
                     className="accent-accent w-3.5 h-3.5 rounded"
                   />
                   <span className="text-xs text-text-sub group-hover:text-text transition-colors">
-                    Include attachments
+                    {t("Include attachments")}
                   </span>
                 </label>
                 <label className="flex items-center gap-2.5 cursor-pointer group">
@@ -805,7 +805,7 @@ export function ExportView({ armorOnly = false }: { armorOnly?: boolean }) {
                     className="accent-accent w-3.5 h-3.5 rounded"
                   />
                   <span className="text-xs text-text-sub group-hover:text-text transition-colors">
-                    Include lights
+                    {t("Include lights")}
                   </span>
                 </label>
                 <label className="flex items-center gap-2.5 cursor-pointer group">
@@ -816,7 +816,7 @@ export function ExportView({ armorOnly = false }: { armorOnly?: boolean }) {
                     className="accent-accent w-3.5 h-3.5 rounded"
                   />
                   <span className="text-xs text-text-sub group-hover:text-text transition-colors">
-                    Include animations
+                    {t("Include animations")}
                   </span>
                 </label>
               </>
@@ -825,7 +825,7 @@ export function ExportView({ armorOnly = false }: { armorOnly?: boolean }) {
 
           {/* Output directory */}
           <div className="flex flex-col gap-1.5">
-            <span className="text-xs text-text-sub">Output directory</span>
+            <span className="text-xs text-text-sub">{t("Output directory")}</span>
             <button
               onClick={handleBrowse}
               className="flex items-center gap-2 w-full bg-surface/50 border border-border rounded-md
@@ -843,7 +843,7 @@ export function ExportView({ armorOnly = false }: { armorOnly?: boolean }) {
               <span
                 className={outputDir ? "text-text truncate" : "text-text-faint"}
               >
-                {outputDir ?? "Choose folder..."}
+                {outputDir ?? t("Choose folder...")}
               </span>
             </button>
             <label className="flex items-center gap-2.5 cursor-pointer group mt-1">
@@ -854,7 +854,7 @@ export function ExportView({ armorOnly = false }: { armorOnly?: boolean }) {
                 className="accent-accent w-3.5 h-3.5 rounded"
               />
               <span className="text-xs text-text-sub group-hover:text-text transition-colors">
-                Include object type directory (ship, vehicle, weapon, other)
+                {t("Include object type directory (ship, vehicle, weapon, other)")}
               </span>
             </label>
           </div>
@@ -869,8 +869,8 @@ export function ExportView({ armorOnly = false }: { armorOnly?: boolean }) {
                 className={`text-[11px] ${result.errors > 0 ? "text-warning" : "text-success"}`}
               >
                 {result.errors > 0
-                  ? `Exported ${result.success} model${result.success !== 1 ? "s" : ""}, ${result.errors} failed`
-                  : `Exported ${result.success} model${result.success !== 1 ? "s" : ""} successfully`}
+                  ? t("Exported {count} models, {failed} failed", { count: result.success, failed: result.errors })
+                  : t("Exported {count} models successfully", { count: result.success })}
               </p>
               {exportErrors.length > 0 && (
                 <div className="max-h-20 overflow-y-auto rounded bg-danger/5 border border-danger/20 px-2 py-1.5">
@@ -897,10 +897,10 @@ export function ExportView({ armorOnly = false }: { armorOnly?: boolean }) {
             `}
           >
             {totalSelected === 0
-              ? (armorOnly ? "Select armor to export" : "Select entities to export")
+              ? (armorOnly ? t("Select armor to export") : t("Select entities to export"))
               : outputDir === null
-                ? "Choose output directory"
-                : `Export ${totalSelected} model${totalSelected !== 1 ? "s" : ""}`}
+                ? t("Choose output directory")
+                : t("Export {count} models", { count: totalSelected })}
           </button>
         </div>
       </div>
@@ -910,7 +910,7 @@ export function ExportView({ armorOnly = false }: { armorOnly?: boolean }) {
         <div className="fixed inset-0 bg-bg/80 backdrop-blur-sm flex items-center justify-center z-50">
           <div className="bg-bg-alt border border-border rounded-lg p-4 w-[480px] max-w-[90vw] shadow-lg">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-text">Select Blender Installation</h3>
+              <h3 className="text-lg font-semibold text-text">{t("Select Blender Installation")}</h3>
               <button
                 onClick={handleTargetSelectorClose}
                 className="text-text-dim hover:text-text p-1 rounded-md hover:bg-surface/60 transition-colors"

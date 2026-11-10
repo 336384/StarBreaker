@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import { previewXml } from "../lib/commands";
+import { useT } from "../i18n";
 
 interface Props {
   path: string;
 }
 
 export function XmlPreview({ path }: Props) {
+  const t = useT();
   const [content, setContent] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -33,7 +35,7 @@ export function XmlPreview({ path }: Props) {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full text-text-dim">
-        <span className="text-xs">Loading XML...</span>
+        <span className="text-xs">{t("Loading XML...")}</span>
       </div>
     );
   }
@@ -42,7 +44,7 @@ export function XmlPreview({ path }: Props) {
     return (
       <div className="flex items-center justify-center h-full">
         <div className="text-center px-8">
-          <p className="text-danger text-sm font-medium">Failed to load XML</p>
+          <p className="text-danger text-sm font-medium">{t("Failed to load XML")}</p>
           <p className="text-text-dim text-xs mt-1 font-mono break-all">{error}</p>
         </div>
       </div>

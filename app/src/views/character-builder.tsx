@@ -12,8 +12,10 @@ import { FacePartPanel } from "../components/character/face-part-panel";
 import { useCharacterStore } from "../stores/character-store";
 import { FACE_PARTS, emptyDna, getRandDna } from "../lib/dna";
 import { dnaExportChfTo, dnaExportGlbTo, dnaImportChf } from "../lib/commands";
+import { useT } from "../i18n";
 
 export function CharacterBuilder() {
+  const t = useT();
   const dna = useCharacterStore((s) => s.dna);
   const full = useCharacterStore((s) => s.full);
   const glb = useCharacterStore((s) => s.glb);
@@ -40,9 +42,9 @@ export function CharacterBuilder() {
   const loadChf = async () => {
     const { open } = await import("@tauri-apps/plugin-dialog");
     const path = await open({
-      title: "Load .chf",
+      title: t("Load .chf"),
       multiple: false,
-      filters: [{ name: "Character file", extensions: ["chf"] }],
+      filters: [{ name: t("Character file"), extensions: ["chf"] }],
     });
     if (typeof path !== "string") return;
     try {
@@ -56,9 +58,9 @@ export function CharacterBuilder() {
   const saveChf = async () => {
     const { save } = await import("@tauri-apps/plugin-dialog");
     const path = await save({
-      title: "Export .chf",
+      title: t("Export .chf"),
       defaultPath: "character.chf",
-      filters: [{ name: "Character file", extensions: ["chf"] }],
+      filters: [{ name: t("Character file"), extensions: ["chf"] }],
     });
     if (!path) return;
     try {
@@ -71,9 +73,9 @@ export function CharacterBuilder() {
   const saveGlb = async () => {
     const { save } = await import("@tauri-apps/plugin-dialog");
     const path = await save({
-      title: "Export .glb",
+      title: t("Export .glb"),
       defaultPath: "character.glb",
-      filters: [{ name: "glTF binary", extensions: ["glb"] }],
+      filters: [{ name: t("glTF binary"), extensions: ["glb"] }],
     });
     if (!path) return;
     try {
@@ -99,9 +101,9 @@ export function CharacterBuilder() {
           <button
             onClick={() => setGender(dna.gender === "Male" ? "Female" : "Male")}
             className={toolbarBtn}
-            title="Toggle gender"
+            title={t("Toggle gender")}
           >
-            {dna.gender}
+            {t(dna.gender)}
           </button>
 
           <label className="flex items-center gap-1.5 cursor-pointer shrink-0">
@@ -111,31 +113,31 @@ export function CharacterBuilder() {
               onChange={(e) => setFull(e.target.checked)}
               className="accent-accent w-3 h-3"
             />
-            <span className="text-[11px] text-text-dim">Full head</span>
+            <span className="text-[11px] text-text-dim">{t("Full head")}</span>
           </label>
 
           <div className="flex-1" />
 
           <button onClick={loadChf} className={toolbarBtn}>
-            Load .chf
+            {t("Load .chf")}
           </button>
           <button onClick={saveChf} className={toolbarBtn}>
-            Export .chf
+            {t("Export .chf")}
           </button>
           <button onClick={saveGlb} className={toolbarBtn}>
-            Export .glb
+            {t("Export .glb")}
           </button>
           <button
             onClick={() => setDna(getRandDna(dna.gender))}
             className={toolbarBtn}
           >
-            Randomize
+            {t("Randomize")}
           </button>
           <button
             onClick={() => setDna(emptyDna(dna.gender))}
             className={toolbarBtn}
           >
-            Reset
+            {t("Reset")}
           </button>
         </div>
 
@@ -159,7 +161,7 @@ export function CharacterBuilder() {
         <CharacterPreview glb={glb} />
         {loading && (
           <div className="absolute top-2 right-2 text-[11px] text-text-dim bg-bg-alt/80 px-2 py-1 rounded">
-            Updating…
+            {t("Updating…")}
           </div>
         )}
       </div>

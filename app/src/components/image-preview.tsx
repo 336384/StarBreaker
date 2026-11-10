@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { readP4kFile } from "../lib/commands";
+import { useT } from "../i18n";
 import { ImagePanZoom } from "./image-pan-zoom";
 
 interface Props {
@@ -24,6 +25,7 @@ function mimeForPath(path: string): string {
 }
 
 export function ImagePreview({ path }: Props) {
+  const t = useT();
   const [objectUrl, setObjectUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -63,7 +65,7 @@ export function ImagePreview({ path }: Props) {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full text-text-dim">
-        <span className="text-xs">Loading image...</span>
+        <span className="text-xs">{t("Loading image...")}</span>
       </div>
     );
   }
@@ -72,7 +74,7 @@ export function ImagePreview({ path }: Props) {
     return (
       <div className="flex items-center justify-center h-full">
         <div className="text-center px-8">
-          <p className="text-danger text-sm font-medium">Failed to load image</p>
+          <p className="text-danger text-sm font-medium">{t("Failed to load image")}</p>
           <p className="text-text-dim text-xs mt-1 font-mono break-all">{error}</p>
         </div>
       </div>

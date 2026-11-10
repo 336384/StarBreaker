@@ -1,6 +1,8 @@
 import { useAudioStore } from "../../stores/audio-store";
+import { useT } from "../../i18n";
 
 export function TriggerList() {
+  const t = useT();
   const triggers = useAudioStore((s) => s.triggers);
   const selectedTrigger = useAudioStore((s) => s.selectedTrigger);
   const selectedTriggerBank = useAudioStore((s) => s.selectedTriggerBank);
@@ -10,7 +12,7 @@ export function TriggerList() {
 
   const selectedBank = useAudioStore((s) => s.selectedBank);
   const showEmpty = (searchMode === "entity" && !selectedEntity) || (searchMode === "bank" && !selectedBank);
-  const title = searchMode === "external" ? "External Sources" : "Triggers";
+  const title = searchMode === "external" ? t("External Sources") : t("Triggers");
 
   return (
     <div className="w-[32%] min-w-[200px] flex flex-col border-r border-border overflow-hidden">
@@ -32,17 +34,17 @@ export function TriggerList() {
             <div className="truncate">{trigger.trigger_name}</div>
             <div className="flex items-center gap-2 text-xs text-text-faint">
               <span className="bg-surface px-1.5 py-0.5 rounded">{trigger.bank_name}</span>
-              {trigger.sound_count > 0 && <span>{trigger.sound_count} sounds</span>}
+              {trigger.sound_count > 0 && <span>{t("{count} sounds", { count: trigger.sound_count })}</span>}
             </div>
           </button>
         ))}
         {triggers.length === 0 && (
           <div className="px-3 py-4 text-xs text-text-faint text-center">
             {searchMode === "external"
-              ? "No external sources found"
+              ? t("No external sources found")
               : showEmpty
-                ? "Select an item to see triggers"
-                : "No triggers found"}
+                ? t("Select an item to see triggers")
+                : t("No triggers found")}
           </div>
         )}
       </div>

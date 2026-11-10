@@ -1,4 +1,6 @@
 import { useAudioStore } from "../../stores/audio-store";
+import { useT } from "../../i18n";
+import { shipName } from "../../lib/ship-names";
 
 export function EntityList() {
   const searchMode = useAudioStore((s) => s.searchMode);
@@ -10,6 +12,7 @@ export function EntityList() {
 }
 
 function EntityListInner() {
+  const t = useT();
   const entities = useAudioStore((s) => s.entities);
   const selectedEntity = useAudioStore((s) => s.selectedEntity);
   const selectEntity = useAudioStore((s) => s.selectEntity);
@@ -17,7 +20,7 @@ function EntityListInner() {
   return (
     <div className="w-[28%] min-w-[180px] flex flex-col border-r border-border overflow-hidden">
       <div className="px-3 py-1.5 text-xs font-medium text-text-dim border-b border-border bg-bg-alt">
-        Entities {entities.length > 0 && `(${entities.length})`}
+        {t("Entities")} {entities.length > 0 && `(${entities.length})`}
       </div>
       <div className="flex-1 overflow-y-auto">
         {entities.map((entity) => (
@@ -31,15 +34,15 @@ function EntityListInner() {
                 : "text-text-sub hover:bg-surface/50 hover:text-text"
             }`}
           >
-            <div className="truncate">{entity.name}</div>
+            <div className="truncate">{shipName(entity.name) ?? entity.name}</div>
             <div className="text-xs text-text-faint">
-              {entity.trigger_count} trigger{entity.trigger_count !== 1 ? "s" : ""}
+              {t("{count} triggers", { count: entity.trigger_count })}
             </div>
           </button>
         ))}
         {entities.length === 0 && (
           <div className="px-3 py-4 text-xs text-text-faint text-center">
-            Search for an entity to see results
+            {t("Search for an entity to see results")}
           </div>
         )}
       </div>
@@ -48,6 +51,7 @@ function EntityListInner() {
 }
 
 function BankList() {
+  const t = useT();
   const banks = useAudioStore((s) => s.banks);
   const selectedBank = useAudioStore((s) => s.selectedBank);
   const selectBank = useAudioStore((s) => s.selectBank);
@@ -55,7 +59,7 @@ function BankList() {
   return (
     <div className="w-[28%] min-w-[180px] flex flex-col border-r border-border overflow-hidden">
       <div className="px-3 py-1.5 text-xs font-medium text-text-dim border-b border-border bg-bg-alt">
-        Banks {banks.length > 0 && `(${banks.length})`}
+        {t("Banks")} {banks.length > 0 && `(${banks.length})`}
       </div>
       <div className="flex-1 overflow-y-auto">
         {banks.map((bank) => (
@@ -71,7 +75,7 @@ function BankList() {
           >
             <div className="truncate font-mono text-xs">{bank.name}</div>
             <div className="text-xs text-text-faint">
-              {bank.trigger_count} trigger{bank.trigger_count !== 1 ? "s" : ""}
+              {t("{count} triggers", { count: bank.trigger_count })}
             </div>
           </button>
         ))}

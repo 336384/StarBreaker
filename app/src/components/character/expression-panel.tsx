@@ -3,8 +3,10 @@
 // Reads/writes the expression state on the character store; the Play button
 // triggers playExpression() which swaps in the animated GLB.
 import { useCharacterStore } from "../../stores/character-store";
+import { useT } from "../../i18n";
 
 export function ExpressionPanel() {
+  const t = useT();
   const emotions = useCharacterStore((s) => s.emotions);
   const emotion = useCharacterStore((s) => s.emotion);
   const variation = useCharacterStore((s) => s.variation);
@@ -22,13 +24,13 @@ export function ExpressionPanel() {
 
   return (
     <div className="flex items-center gap-2 px-3 py-1.5 border-t border-border bg-bg-alt shrink-0 flex-wrap">
-      <span className="text-[11px] text-text-dim">Expression</span>
+      <span className="text-[11px] text-text-dim">{t("Expression")}</span>
       <select
         className={sel}
         value={emotion ?? ""}
         onChange={(e) => setEmotion(e.target.value)}
       >
-        {emotions.length === 0 && <option value="">(none)</option>}
+        {emotions.length === 0 && <option value="">{t("(none)")}</option>}
         {emotions.map((e) => (
           <option key={e.emotion} value={e.emotion}>
             {e.emotion}
@@ -42,11 +44,11 @@ export function ExpressionPanel() {
         disabled={!current}
       >
         {(current?.variations ?? []).map((v) => (
-          <option key={v} value={v}>{`idle ${v}`}</option>
+          <option key={v} value={v}>{t("idle {n}", { n: v })}</option>
         ))}
       </select>
       <label className="flex items-center gap-1 text-[11px] text-text-dim">
-        intensity
+        {t("intensity")}
         <input
           type="range"
           min={0}
@@ -63,10 +65,10 @@ export function ExpressionPanel() {
         disabled={!emotion || loadingAnim}
         className="px-3 py-1 rounded-md text-xs font-medium bg-surface text-text-sub hover:bg-surface-hi hover:text-text transition-colors cursor-pointer disabled:opacity-50"
       >
-        {loadingAnim ? "Loading…" : "▶ Play"}
+        {loadingAnim ? t("Loading…") : t("▶ Play")}
       </button>
       {playing && !loadingAnim && (
-        <span className="text-[11px] text-text-dim">▶ playing</span>
+        <span className="text-[11px] text-text-dim">{t("▶ playing")}</span>
       )}
     </div>
   );

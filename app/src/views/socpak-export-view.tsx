@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { ResizeHandle } from "../components/resize-handle";
 import { SocpakSelectionDialog } from "../components/socpak-selection-dialog";
 import { useSocpakExportStore } from "../stores/socpak-export-store";
+import { tm, useT } from "../i18n";
 import {
   browseOutputDir,
   exportSocpaks,
@@ -49,6 +50,7 @@ interface SocpakGroup {
 }
 
 export function SocpakExportView() {
+  const t = useT();
   const optionsWidth = useSocpakExportStore((s) => s.optionsWidth);
   const search = useSocpakExportStore((s) => s.search);
   const lod = useSocpakExportStore((s) => s.lod);
@@ -317,8 +319,13 @@ export function SocpakExportView() {
         if (nodes.length < rootPaths.length) {
           if (nodes.length > 0) {
             setError(
-              `Could not inspect ${rootPaths.length - nodes.length} of ${rootPaths.length} ` +
-                `selected socpak(s); exporting the full selection without sub-container filtering.`,
+              t(
+                "Could not inspect {failed} of {total} selected socpaks; exporting the full selection without sub-container filtering.",
+                {
+                  failed: rootPaths.length - nodes.length,
+                  total: rootPaths.length,
+                },
+              ),
             );
           }
           startSocpakExport(buildExportRequest());
@@ -362,9 +369,9 @@ export function SocpakExportView() {
           <div className="w-[420px] bg-bg-alt border border-border rounded-lg p-6 flex flex-col gap-4 shadow-lg">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <h3 className="text-sm font-semibold text-text">Exporting socpak packages</h3>
+                <h3 className="text-sm font-semibold text-text">{t("Exporting socpak packages")}</h3>
                 <p className="text-[11px] text-text-dim truncate mt-1">
-                  {activeSocpakName || "Preparing export"}
+                  {activeSocpakName || t("Preparing export")}
                 </p>
               </div>
               <div className="text-right shrink-0">
@@ -385,22 +392,25 @@ export function SocpakExportView() {
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0 flex-1">
                   <p className="text-[11px] text-text-dim truncate">
-                    {progress?.stage ?? "Preparing export"}
+                    {progress?.stage ? tm(progress.stage) : t("Preparing export")}
                   </p>
                   {progress?.package_name && (
                     <p className="text-[10px] text-text-faint truncate mt-0.5">
-                      Package: {progress.package_name}
+                      {t("Package: {name}", { name: progress.package_name })}
                     </p>
                   )}
                 </div>
                 {progress && progress.files_total > 0 && (
                   <p className="text-[10px] text-text-faint tabular-nums shrink-0">
-                    {progress.files_written}/{progress.files_total} files
+                    {t("{written}/{total} files", {
+                      written: progress.files_written,
+                      total: progress.files_total,
+                    })}
                   </p>
                 )}
                 {progress && progress.files_total === 0 && progress.files_written > 0 && (
                   <p className="text-[10px] text-text-faint tabular-nums shrink-0">
-                    {progress.files_written} container{progress.files_written === 1 ? "" : "s"}
+                    {t("{count} containers", { count: progress.files_written })}
                   </p>
                 )}
               </div>
@@ -429,7 +439,7 @@ export function SocpakExportView() {
         >
           <input
             type="text"
-            placeholder="Search socpak paths..."
+            placeholder={t("Search socpak paths...")}
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             className="flex-1 bg-surface rounded-md px-3 py-1.5 text-sm text-text placeholder:text-text-faint outline-none focus:ring-1 focus:ring-ring"
@@ -438,13 +448,13 @@ export function SocpakExportView() {
             onClick={selectVisible}
             className="text-[11px] text-text-dim hover:text-text px-2 py-1 rounded-md hover:bg-surface/60 transition-colors cursor-pointer shrink-0"
           >
-            All
+            {t("All")}
           </button>
           <button
             onClick={clearVisible}
             className="text-[11px] text-text-dim hover:text-text px-2 py-1 rounded-md hover:bg-surface/60 transition-colors cursor-pointer shrink-0"
           >
-            None
+            {t("None")}
           </button>
           <span className="text-[11px] text-text-faint tabular-nums shrink-0">
             {selectedVisibleCount}/{socpaks.length}
@@ -453,10 +463,10 @@ export function SocpakExportView() {
 
         <div className="flex-1 overflow-y-auto px-1">
           {loading && (
-            <p className="px-3 py-3 text-xs text-text-dim">Scanning socpaks...</p>
+            <p className="px-3 py-3 text-xs text-text-dim">{t("Scanning socpaks...")}</p>
           )}
           {!loading && socpaks.length === 0 && (
-            <p className="px-3 py-3 text-xs text-text-dim">No socpaks match this filter.</p>
+            <p className="px-3 py-3 text-xs text-text-dim">{t("No socpaks match this filter.")}</p>
           )}
           {!loading && groups.map((group) => {
             const catOpen = openCats.has(group.name);
@@ -469,7 +479,7 @@ export function SocpakExportView() {
                     className="flex-1 min-w-0 flex items-center gap-1.5 px-2 py-1.5 rounded-md text-xs font-medium text-text hover:bg-surface/50 transition-colors cursor-pointer"
                   >
                     <span className="text-text-faint w-3 shrink-0 text-center">{catOpen ? "▾" : "▸"}</span>
-                    <span className="truncate">{group.name}</span>
+                    <span className="truncate">{tm(group.name)}</span>
                     {catSelected > 0 && (
                       <span className="text-[10px] text-accent tabular-nums shrink-0">{catSelected}</span>
                     )}
@@ -479,9 +489,9 @@ export function SocpakExportView() {
                     <button
                       onClick={() => setGroupSelected(group.subs.flatMap((sub) => sub.entries), catSelected < group.count)}
                       className="text-[10px] text-text-faint hover:text-text px-1.5 py-1 rounded opacity-0 group-hover/cat:opacity-100 transition-opacity cursor-pointer shrink-0"
-                      title={catSelected < group.count ? "Select all in category" : "Clear category"}
+                      title={catSelected < group.count ? t("Select all in category") : t("Clear category")}
                     >
-                      {catSelected < group.count ? "All" : "None"}
+                      {catSelected < group.count ? t("All") : t("None")}
                     </button>
                   )}
                 </div>
@@ -497,7 +507,7 @@ export function SocpakExportView() {
                         className="w-full flex items-center gap-1.5 px-2 py-1 rounded-md text-[11px] text-text-sub hover:bg-surface/40 transition-colors cursor-pointer"
                       >
                         <span className="text-text-faint w-3 shrink-0 text-center">{subOpen ? "▾" : "▸"}</span>
-                        <span className="truncate">{sub.name}</span>
+                        <span className="truncate">{tm(sub.name)}</span>
                         {subSelected > 0 && (
                           <span className="text-[10px] text-accent tabular-nums shrink-0">{subSelected}</span>
                         )}
@@ -538,12 +548,12 @@ export function SocpakExportView() {
       <div className="shrink-0 border-l border-border bg-bg-alt flex flex-col" style={{ width: optionsWidth }}>
         <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-5">
           <h2 className="text-xs font-semibold text-primary uppercase tracking-wider">
-            Socpak Export
+            {t("Socpak Export")}
           </h2>
 
           <div className="flex flex-col gap-1.5">
             <div className="flex items-center justify-between">
-              <span className="text-xs text-text-sub">LOD Level</span>
+              <span className="text-xs text-text-sub">{t("LOD Level")}</span>
               <span className="text-xs text-text-faint tabular-nums">{lod}</span>
             </div>
             <input
@@ -558,7 +568,7 @@ export function SocpakExportView() {
 
           <div className="flex flex-col gap-1.5">
             <div className="flex items-center justify-between">
-              <span className="text-xs text-text-sub">Texture Mip</span>
+              <span className="text-xs text-text-sub">{t("Texture Mip")}</span>
               <span className="text-xs text-text-faint tabular-nums">{mip}</span>
             </div>
             <input
@@ -572,7 +582,7 @@ export function SocpakExportView() {
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <span className="text-xs text-text-sub">Materials</span>
+            <span className="text-xs text-text-sub">{t("Materials")}</span>
             <div className="flex flex-col gap-1">
               {([
                 ["none", "None"],
@@ -590,7 +600,7 @@ export function SocpakExportView() {
                     className="accent-accent w-3 h-3"
                   />
                   <span className="text-xs text-text-sub group-hover:text-text transition-colors">
-                    {label}
+                    {t(label)}
                   </span>
                 </label>
               ))}
@@ -606,7 +616,7 @@ export function SocpakExportView() {
                 className="accent-accent w-3.5 h-3.5 rounded"
               />
               <span className="text-xs text-text-sub group-hover:text-text transition-colors">
-                Include lights
+                {t("Include lights")}
               </span>
             </label>
             <label className="flex items-center gap-2.5 cursor-pointer group">
@@ -617,7 +627,7 @@ export function SocpakExportView() {
                 className="accent-accent w-3.5 h-3.5 rounded"
               />
               <span className="text-xs text-text-sub group-hover:text-text transition-colors">
-                Overwrite existing assets
+                {t("Overwrite existing assets")}
               </span>
             </label>
             <label className="flex items-center gap-2.5 cursor-pointer group">
@@ -628,19 +638,19 @@ export function SocpakExportView() {
                 className="accent-accent w-3.5 h-3.5 rounded"
               />
               <span className="text-xs text-text-sub group-hover:text-text transition-colors">
-                Include NoDraw faces and sidecars
+                {t("Include NoDraw faces and sidecars")}
               </span>
             </label>
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <span className="text-xs text-text-sub">Output directory</span>
+            <span className="text-xs text-text-sub">{t("Output directory")}</span>
             <button
               onClick={browseOutput}
               className="flex items-center gap-2 w-full bg-surface/50 border border-border rounded-md px-3 py-2 text-xs text-left cursor-pointer hover:bg-surface/80 transition-colors"
             >
               <span className={outputDir ? "text-text truncate" : "text-text-faint"}>
-                {outputDir ?? "Choose folder..."}
+                {outputDir ?? t("Choose folder...")}
               </span>
             </button>
           </div>
@@ -649,7 +659,10 @@ export function SocpakExportView() {
         <div className="p-4 border-t border-border flex flex-col gap-3">
           {result && (
             <p className="text-[11px] text-success leading-relaxed">
-              Wrote {result.file_count} files into {result.package_names.length} package{result.package_names.length === 1 ? "" : "s"}.
+              {t("Wrote {files} files into {count} packages.", {
+                files: result.file_count,
+                count: result.package_names.length,
+              })}
             </p>
           )}
           {error && (
@@ -665,12 +678,12 @@ export function SocpakExportView() {
             }`}
           >
             {selected.size === 0
-              ? "Select socpaks to export"
+              ? t("Select socpaks to export")
               : outputDir === null
-                ? "Choose output directory"
+                ? t("Choose output directory")
                 : inspecting
-                  ? "Crawling hierarchy..."
-                : `Export ${selected.size} socpak${selected.size === 1 ? "" : "s"}`}
+                  ? t("Crawling hierarchy...")
+                  : t("Export {count} socpaks", { count: selected.size })}
           </button>
         </div>
       </div>

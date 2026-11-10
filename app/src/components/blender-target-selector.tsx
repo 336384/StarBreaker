@@ -4,6 +4,7 @@ import {
   type BlenderAddonTarget,
   type BlenderAddonTargets,
 } from "../lib/commands";
+import { useT } from "../i18n";
 
 interface BlenderTargetSelectorProps {
   onTargetSelected: (addonsPath: string) => void;
@@ -14,6 +15,7 @@ export function BlenderTargetSelector({
   onTargetSelected,
   onUninstallRequested,
 }: BlenderTargetSelectorProps) {
+  const t = useT();
   const [data, setData] = useState<BlenderAddonTargets | null>(null);
   const [scanning, setScanning] = useState(true);
   const [scanError, setScanError] = useState<string | null>(null);
@@ -31,7 +33,7 @@ export function BlenderTargetSelector({
   const handleBrowseCustom = async () => {
     const { open } = await import("@tauri-apps/plugin-dialog");
     const picked = await open({
-      title: "Select the Blender 'scripts/addons' directory",
+      title: t("Select the Blender 'scripts/addons' directory"),
       directory: true,
       multiple: false,
     });
@@ -45,19 +47,19 @@ export function BlenderTargetSelector({
       case "install":
         return (
           <span className="px-2.5 py-1 rounded-md text-[11px] font-medium bg-accent text-on-accent">
-            Install
+            {t("Install")}
           </span>
         );
       case "upgrade":
         return (
           <span className="px-2.5 py-1 rounded-md text-[11px] font-medium bg-accent text-on-accent">
-            Update
+            {t("Update")}
           </span>
         );
       case "installed":
         return (
           <span className="px-2.5 py-1 rounded-md text-[11px] font-medium border border-success/40 text-success">
-            ✓ Current
+            {t("✓ Current")}
           </span>
         );
     }
@@ -66,7 +68,7 @@ export function BlenderTargetSelector({
   if (scanning) {
     return (
       <div className="p-4 text-center">
-        <p className="text-text-dim text-sm">Scanning for Blender installations...</p>
+        <p className="text-text-dim text-sm">{t("Scanning for Blender installations...")}</p>
       </div>
     );
   }
@@ -74,12 +76,14 @@ export function BlenderTargetSelector({
   if (scanError) {
     return (
       <div className="p-4">
-        <p className="text-danger text-sm mb-3">Error scanning for Blender: {scanError}</p>
+        <p className="text-danger text-sm mb-3">
+          {t("Error scanning for Blender: {error}", { error: scanError })}
+        </p>
         <button
           onClick={handleBrowseCustom}
           className="w-full px-3 py-2 bg-accent text-on-accent rounded-md text-sm hover:brightness-110 transition-colors"
         >
-          Browse for addons folder...
+          {t("Browse for addons folder...")}
         </button>
       </div>
     );
@@ -94,14 +98,14 @@ export function BlenderTargetSelector({
       {running && (
         <div className="rounded-md border border-warning/30 bg-warning/10 px-3 py-2">
           <p className="text-[11px] text-warning leading-relaxed">
-            ⚠ Blender appears to be running. Restart Blender after install to load the new version.
+            {t("⚠ Blender appears to be running. Restart Blender after install to load the new version.")}
           </p>
         </div>
       )}
 
       {targets.length > 0 && (
         <>
-          <p className="text-xs text-text-sub font-medium">Detected Installations</p>
+          <p className="text-xs text-text-sub font-medium">{t("Detected Installations")}</p>
           {targets.map((target, idx) => {
             const isInstalled =
               target.state === "installed" || target.state === "upgrade";
@@ -116,14 +120,14 @@ export function BlenderTargetSelector({
                 >
                   <div className="min-w-0 flex-1">
                     <p className="text-sm text-text font-medium">
-                      Blender {target.blender_version}
+                      {t("Blender {version}", { version: target.blender_version })}
                     </p>
                     <p className="text-xs text-text-dim truncate mt-0.5">
                       {target.addons_path}
                     </p>
                     {target.installed_version && (
                       <p className="text-xs text-text-faint mt-1">
-                        Addon: v{target.installed_version}
+                        {t("Addon: v{version}", { version: target.installed_version })}
                       </p>
                     )}
                   </div>
@@ -132,8 +136,8 @@ export function BlenderTargetSelector({
                 {isInstalled && (
                   <button
                     onClick={() => onUninstallRequested(target.addons_path)}
-                    title="Uninstall addon from this Blender"
-                    aria-label="Uninstall addon"
+                    title={t("Uninstall addon from this Blender")}
+                    aria-label={t("Uninstall addon")}
                     className="shrink-0 px-3 flex items-center text-text-dim hover:text-danger hover:bg-danger/10 transition-colors cursor-pointer border-l border-border"
                   >
                     <svg
@@ -161,8 +165,8 @@ export function BlenderTargetSelector({
       {targets.length === 0 && (
         <p className="text-sm text-text-dim text-center py-3">
           {hasIncompatible
-            ? "Blender found but requires 5.0 or newer."
-            : "No Blender installations detected"}
+            ? t("Blender found but requires 5.0 or newer.")
+            : t("No Blender installations detected")}
         </p>
       )}
 
@@ -170,7 +174,7 @@ export function BlenderTargetSelector({
         onClick={handleBrowseCustom}
         className="px-3 py-2 border border-dashed border-surface-hi rounded-md text-sm text-text-sub hover:text-text hover:border-accent/50 hover:bg-accent/5 transition-colors cursor-pointer"
       >
-        Browse for addons folder...
+        {t("Browse for addons folder...")}
       </button>
     </div>
   );
