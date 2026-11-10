@@ -43,9 +43,15 @@ jobs:
         env:
           COMMIT_SHA: ${{ github.sha }}
 
+      # The binary name depends on Tauri's mainBinaryName handling
+      # (`starbreaker-app.exe` vs `StarBreaker.exe`), so list what was produced
+      # and upload by glob instead of hard-coding one file name.
+      - name: List built executables
+        run: Get-ChildItem src-tauri/target/release/*.exe | Select-Object Name, Length
+
       - name: Upload portable executable
         uses: actions/upload-artifact@v7
         with:
-          name: starbreaker-${{ github.sha }}
-          path: app/src-tauri/target/release/starbreaker.exe
+          name: starbreaker-zh-CN
+          path: app/src-tauri/target/release/*.exe
           if-no-files-found: error
