@@ -39,7 +39,7 @@ jobs:
         run: npm ci
 
       - name: Build Tauri app (portable)
-        run: npx tauri build --bundles none
+         run: npx tauri build --no-bundle --no-sign
         env:
           COMMIT_SHA: ${{ github.sha }}
 
