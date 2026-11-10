@@ -55,3 +55,4 @@ jobs:
           name: starbreaker-zh-CN
           path: app/src-tauri/target/release/*.exe
           if-no-files-found: error
+# restore workflow registration
