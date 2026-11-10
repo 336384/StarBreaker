@@ -1,5 +1,7 @@
 # StarBreaker
 
+> [English](README.md) · [简体中文](README.zh-CN.md)
+
 [Download latest release](https://github.com/diogotr7/StarBreaker/releases/latest)
 
 Toolkit for reading and extracting Star Citizen game files. Handles the P4k archive, DataCore database, CryEngine assets, Wwise audio, and character files.
