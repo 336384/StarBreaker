@@ -24,35 +24,43 @@ jobs:
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
 
-      # Read-only cache: reuse whatever release.yml last warmed under
-      # `cache-${{ platform }}` but never write back, so ad-hoc dispatches
-      # can't evict the release cache.
+      # `app/src-tauri` is a member of the root Cargo workspace, so cargo writes
+      # its artifacts to <repo>/target. Cache that directory, and allow the
+      # first successful run to warm it (a fork has no pre-existing cache).
       - name: Rust cache
         uses: swatinem/rust-cache@v2
         with:
-          workspaces: app/src-tauri
+          workspaces: .
           shared-key: cache-windows-latest
-          save-if: false
           cache-on-failure: true
 
       - name: Install frontend dependencies
         run: npm ci
 
+      # Tauri 2's CLI only accepts real bundle targets for `--bundles`
+      # (msi/nsis on Windows); `--bundles none` is rejected, so use the
+      # dedicated `--no-bundle` flag to get a portable executable.
       - name: Build Tauri app (portable)
         run: npx tauri build --no-bundle --no-sign
         env:
           COMMIT_SHA: ${{ github.sha }}
 
-      # The binary name depends on Tauri's mainBinaryName handling
-      # (`starbreaker-app.exe` vs `StarBreaker.exe`), so list what was produced
-      # and upload by glob instead of hard-coding one file name.
+      # The binary lands in the workspace-root target dir, not in
+      # app/src-tauri/target. Its name depends on Tauri's mainBinaryName
+      # handling (`starbreaker-app.exe` vs `StarBreaker.exe`), hence the glob.
       - name: List built executables
-        run: Get-ChildItem src-tauri/target/release/*.exe | Select-Object Name, Length
+        run: |
+          foreach ($dir in @("../target/release", "src-tauri/target/release")) {
+            Write-Host "== $dir =="
+            if (Test-Path $dir) { Get-ChildItem $dir/*.exe | Select-Object Name, Length }
+            else { Write-Host "(missing)" }
+          }
 
       - name: Upload portable executable
         uses: actions/upload-artifact@v7
         with:
           name: starbreaker-zh-CN
-          path: app/src-tauri/target/release/*.exe
+          path: |
+            target/release/*.exe
+            app/src-tauri/target/release/*.exe
           if-no-files-found: error
-# restore workflow registration
