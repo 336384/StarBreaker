@@ -1,0 +1,83 @@
+name: Release (zh-CN)
+
+# Builds the localized Windows app and publishes it as a GitHub Release.
+#
+# The `zh-v*` tag prefix is deliberate: upstream's own `release.yml` triggers on
+# `v*` and needs the maintainer's TAURI_SIGNING_PRIVATE_KEY, which a fork does
+# not have. Keeping this workflow on a different prefix means pushing a tag
+# here never kicks off that failing build.
+#
+# Updater artifacts are disabled in tauri.conf.json, so the build needs no
+# signing key; `--no-sign` also skips Windows code signing.
+on:
+  push:
+    tags:
+      - "zh-v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag to publish (for example zh-v0.3.2)"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: app
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: .
+          shared-key: cache-windows-latest
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Build portable exe + NSIS installer
+        run: npx tauri build --bundles nsis --no-sign
+        env:
+          COMMIT_SHA: ${{ github.sha }}
+
+      - name: Collect release files
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force ../dist-release | Out-Null
+          Copy-Item ../target/release/*.exe ../dist-release/
+          Copy-Item ../target/release/bundle/nsis/*.exe ../dist-release/
+          Get-ChildItem ../dist-release | Select-Object Name, Length
+
+      - name: Publish release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          $tag = if ("${{ github.event_name }}" -eq "workflow_dispatch") { "${{ inputs.tag }}" } else { "${{ github.ref_name }}" }
+          $notes = @"
+          StarBreaker 简体中文版（基于上游 main，包含护甲 / Socpak / 角色等最新界面）。
+
+          界面已汉化，并内置 677 条飞船 / 载具中文名对照；启动后可在启动页右上角或侧边栏底部切换语言。
+
+          - StarBreaker_*_x64-setup.exe —— 安装包（开始菜单快捷方式，可在设置中卸载）
+          - StarBreaker.exe —— 便携版，解压即用
+
+          未签名：首次运行 SmartScreen 会提示“未知发布者”，点“更多信息 -> 仍要运行”。
+          "@
+          gh release create $tag ../dist-release/*.exe --title "StarBreaker $tag 简体中文版" --notes $notes || gh release upload $tag ../dist-release/*.exe --clobber
