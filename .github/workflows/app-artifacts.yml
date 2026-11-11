@@ -40,10 +40,25 @@ jobs:
       # Produces both the portable executable and an NSIS installer.
       # Updater artifacts stay disabled in tauri.conf.json: this fork has no
       # TAURI_SIGNING_PRIVATE_KEY, and signing them is what would require it.
+      #
+      # The log is kept and compiler errors are re-emitted as annotations, so a
+      # failed build is diagnosable from the check-run annotations (which are
+      # readable without repository access) instead of the full log.
       - name: Build Tauri app (portable + NSIS installer)
-        run: npx tauri build --bundles nsis --no-sign
+        shell: pwsh
         env:
           COMMIT_SHA: ${{ github.sha }}
+        run: |
+          npx tauri build --bundles nsis --no-sign 2>&1 | Tee-Object -FilePath ../build.log
+          if ($LASTEXITCODE -ne 0) {
+            $errors = Select-String -Path ../build.log -Pattern '^error(\[|:)' | Select-Object -First 10
+            if ($errors) {
+              foreach ($e in $errors) { Write-Host "::error::$($e.Line)" }
+            } else {
+              Get-Content ../build.log -Tail 5 | ForEach-Object { Write-Host "::error::$_" }
+            }
+            exit 1
+          }
 
       # The binary lands in the workspace-root target dir, not in
       # app/src-tauri/target. Its name depends on Tauri's mainBinaryName
