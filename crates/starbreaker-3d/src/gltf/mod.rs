@@ -200,25 +200,10 @@ pub fn write_glb_with_progress(
         );
         drop(input.root_textures);
 
-        // `pack_mesh` returns None when nothing is drawable (every submesh is
-        // NoDraw or a textureless decal). The hierarchy is still built, just
-        // without meshes, instead of emitting an invalid empty-primitive mesh.
-        let empty_packed = PackedMeshInfo {
-            mesh_idx: 0,
-            vertex: VertexAccessors::default(),
-            submesh_mat_indices: Vec::new(),
-            submesh_idx_accessors: Vec::new(),
-        };
-        let packed_ref = root_packed.as_ref().unwrap_or(&empty_packed);
-
         // ---- Build root NMC scene graph ----
         if let Some(nmc) = input.root_nmc.as_ref().filter(|n| !n.nodes.is_empty()) {
-            let root_nodes = builder.build_nmc_hierarchy(
-                packed_ref,
-                nmc,
-                &root_mesh.submeshes,
-                root_packed.is_some(),
-            );
+            let root_nodes =
+                builder.build_nmc_hierarchy(&root_packed, nmc, &root_mesh.submeshes, true);
             root_nodes
                 .iter()
                 .map(|&i| json::Index::new(i))
@@ -227,9 +212,7 @@ pub fn write_glb_with_progress(
             // Flat path — single node with root mesh, named after the entity
             builder.nodes_json.push(json::Node {
                 name: root_name.clone(),
-                mesh: root_packed
-                    .as_ref()
-                    .map(|packed| json::Index::new(packed.mesh_idx)),
+                mesh: Some(json::Index::new(root_packed.mesh_idx)),
                 ..Default::default()
             });
             vec![json::Index::new(0)]

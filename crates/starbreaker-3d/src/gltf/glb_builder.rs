@@ -929,7 +929,7 @@ impl GlbBuilder {
             child.mesh.tangents = None;
             child.mesh.colors = None;
             child.mesh.indices = Vec::new();
-            packed
+            Some(packed)
         } else {
             None
         };
@@ -948,7 +948,7 @@ impl GlbBuilder {
                     }),
                     child_nmc,
                     &child.mesh.submeshes,
-                    child_packed.is_some(),
+                    has_mesh,
                 );
 
                 // Log NMC node debug info
@@ -1206,18 +1206,8 @@ impl GlbBuilder {
                         material_mode,
                         false,
                     );
-                    match packed {
-                        Some(packed) => {
-                            packed_cache.insert(cache_key, packed.mesh_idx);
-                            Some(packed.mesh_idx)
-                        }
-                        // Nothing drawable in this CGF: remember that and skip
-                        // the placement instead of emitting an empty mesh.
-                        None => {
-                            packed_cache.insert(cache_key, u32::MAX);
-                            Some(u32::MAX)
-                        }
-                    }
+                    packed_cache.insert(cache_key, packed.mesh_idx);
+                    Some(packed.mesh_idx)
                 };
 
                 let Some(gltf_mesh_idx) = gltf_mesh_idx.filter(|&i| i != u32::MAX) else {
@@ -1272,10 +1262,6 @@ impl GlbBuilder {
 
     /// Pack a mesh's vertex data, textures, and materials into the builder.
     /// Returns a PackedMeshInfo with accessor/material indices for building primitives.
-    ///
-    /// Returns `None` when every submesh was skipped (NoDraw or textureless
-    /// decals): a glTF mesh must have at least one primitive, and callers turn
-    /// `None` into a node without geometry.
     pub fn pack_mesh(
         &mut self,
         mesh: &Mesh,
@@ -1285,7 +1271,7 @@ impl GlbBuilder {
         mesh_name: Option<&str>,
         material_mode: crate::pipeline::MaterialMode,
         preserve_textureless_decal_primitives: bool,
-    ) -> Option<PackedMeshInfo> {
+    ) -> PackedMeshInfo {
         let include_tangents = material_mode.include_tangents();
         let experimental_textures = material_mode.experimental();
         let reuse_key = build_scene_mesh_reuse_key(
@@ -1297,7 +1283,7 @@ impl GlbBuilder {
             preserve_textureless_decal_primitives,
         );
         if let Some(packed) = self.scene_mesh_cache.get(&reuse_key) {
-            return Some(packed.clone());
+            return packed.clone();
         }
         let geometry_key = SceneGeometryReuseKey {
             geometry_hash: hash_mesh_for_reuse(mesh, include_tangents),
@@ -1464,14 +1450,6 @@ impl GlbBuilder {
             });
         }
 
-        // A mesh with zero primitives is invalid glTF (`primitives` has
-        // minItems 1) and crashes Blender's importer, which classifies such a
-        // mesh as an empty point cloud and then indexes `primitives[0]`.
-        // Skip the mesh entirely; callers emit a node without geometry instead.
-        if primitives.is_empty() {
-            return None;
-        }
-
         let mesh_idx = self.meshes_json.len() as u32;
         if !geometry.vertex.morph_target_names.is_empty() {
             self.morph_names.insert(self.meshes_json.len() as u32, geometry.vertex.morph_target_names.clone());
@@ -1492,7 +1470,7 @@ impl GlbBuilder {
         };
 
         self.scene_mesh_cache.insert(reuse_key, packed.clone());
-        Some(packed)
+        packed
     }
 
     /// Build an NMC node hierarchy from a packed mesh.
@@ -1548,12 +1526,6 @@ impl GlbBuilder {
                         extensions: None,
                         extras: Default::default(),
                     });
-                }
-                // Every submesh of this NMC node was skipped (NoDraw / decal
-                // without texture). Emitting a mesh with no primitives is
-                // invalid glTF, so leave the node without geometry.
-                if primitives.is_empty() {
-                    continue;
                 }
                 node_mesh_idx[nmc_idx] = Some(self.meshes_json.len() as u32);
                 if !packed.vertex.morph_target_names.is_empty() {
