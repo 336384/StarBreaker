@@ -1586,6 +1586,58 @@ impl GlbBuilder {
         root_nodes
     }
 
+    /// Drop meshes that ended up with no primitives.
+    ///
+    /// Every submesh of such a mesh was skipped while packing (NoDraw, or a
+    /// decal with no base colour texture), so no primitive was emitted. A glTF
+    /// mesh must still have at least one primitive: Blender's importer treats
+    /// an empty mesh as a point cloud and then indexes `primitives[0]`, which
+    /// aborts the whole import. Removing the mesh here keeps the file valid;
+    /// the nodes that pointed at it keep their transform and lose only the
+    /// mesh reference.
+    fn drop_empty_meshes(&mut self) {
+        if self.meshes_json.iter().all(|mesh| !mesh.primitives.is_empty()) {
+            return;
+        }
+
+        let mut remap: Vec<Option<u32>> = vec![None; self.meshes_json.len()];
+        let mut kept: Vec<json::Mesh> = Vec::with_capacity(self.meshes_json.len());
+        for (old_index, mesh) in std::mem::take(&mut self.meshes_json).into_iter().enumerate() {
+            if mesh.primitives.is_empty() {
+                log::debug!(
+                    "dropping mesh '{}': no primitives",
+                    mesh.name.as_deref().unwrap_or("?")
+                );
+                continue;
+            }
+            remap[old_index] = Some(kept.len() as u32);
+            kept.push(mesh);
+        }
+        self.meshes_json = kept;
+
+        for node in &mut self.nodes_json {
+            if let Some(mesh_index) = node.mesh {
+                node.mesh = remap
+                    .get(mesh_index.value())
+                    .copied()
+                    .flatten()
+                    .map(json::Index::new);
+            }
+        }
+
+        let old_morph_names = std::mem::take(&mut self.morph_names);
+        self.morph_names = old_morph_names
+            .into_iter()
+            .filter_map(|(old_index, names)| {
+                remap
+                    .get(old_index as usize)
+                    .copied()
+                    .flatten()
+                    .map(|new_index| (new_index, names))
+            })
+            .collect();
+    }
+
     /// Finalize the GLB: add coordinate root, serialize JSON + binary to GLB bytes.
     /// `lights` is the list of KHR_lights_punctual lights (empty for no lights).
     pub fn finalize(
@@ -1594,6 +1646,7 @@ impl GlbBuilder {
         lights: Vec<crate::types::LightInfo>,
         metadata: &super::GlbMetadata,
     ) -> Result<Vec<u8>, Error> {
+        self.drop_empty_meshes();
         self.bind_skins();
 
         // Wrap all content under CryEngine Z-up → glTF Y-up rotation root.
