@@ -45,6 +45,19 @@ jobs:
         env:
           COMMIT_SHA: ${{ github.sha }}
 
+      # Runs only when the build failed: re-checks the crates and republishes the
+      # compiler errors as check-run annotations, which are readable without
+      # repository access (handy when nobody can open the raw log). Purely
+      # diagnostic — it never affects the job result.
+      - name: Surface compile errors
+        if: failure()
+        shell: pwsh
+        run: |
+          cargo check -p starbreaker-3d --message-format short 2>&1 |
+            Select-String -Pattern 'error(\[E\d+\])?:' |
+            Select-Object -First 10 |
+            ForEach-Object { Write-Host "::error::$($_.Line)" }
+
       # The binary lands in the workspace-root target dir, not in
       # app/src-tauri/target. Its name depends on Tauri's mainBinaryName
       # handling (`starbreaker-app.exe` vs `StarBreaker.exe`), hence the glob.
